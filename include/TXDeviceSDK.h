@@ -60,6 +60,9 @@ typedef struct tag_tx_binder_info
 //设备通知：登录、在线状态、消息等相关的事件通知
 typedef struct _tx_device_notify
 {
+	// 成功上传设备注册信息到服务器（用于跨网绑定模式下是否展示二维码的依据，有此回调则表示信息上传成功，可以展示二维码）
+	void (*on_wlan_upload_register_info_success)();
+
     // Login complete callback
     void (*on_login_complete)(int error_code);
 
@@ -148,7 +151,8 @@ SDK_API void tx_set_log_func(tx_log_func log_func);
 
 
 /**
-* 接口说明：获取设备绑定者列表
+* 接口说明：获取设备绑定者列表。 
+* WARN: system_path目录如果被清除，则不能拉取到绑定者列表
 */
 typedef void (*on_get_binder_list_result)(tx_binder_info * pBinderList, int nCount);
 SDK_API int tx_get_binder_list(tx_binder_info * pBinderList, int* nCount, on_get_binder_list_result callback);
@@ -179,6 +183,7 @@ SDK_API int tx_erase_all_binders(on_erase_all_binders callback);
  *           如果没有登录成功，则此接口只返回 0
  */
 SDK_API int tx_get_server_time();
+
 
 
 

@@ -43,7 +43,7 @@ enum error_code
     err_not_impl                            = 0x00000011,       //(17)      未实现
     err_fetching                            = 0x00000012,       //(18)      正在向后台获取数据中
     err_fetching_buff_not_enough            = 0x00000013,       //(19)      正在向后台获取数据中 & buffer长度不足
-    err_off_line                            = 0x00000014,       //(20)      当前没有处于离线状态
+    err_off_line                            = 0x00000014,       //(20)      当前设备处于离线状态
     err_invalid_device_name                 = 0x00000015,       //(21)      设备名没填，或者长度超过32byte
     err_invalid_os_platform                 = 0x00000016,       //(22)      系统信息没填，或者长度超过32byte
     err_invalid_license                     = 0x00000017,       //(23)      license没填，或者长度超过150byte

@@ -21,6 +21,11 @@ CXX_EXTERN_BEGIN
 #define BUSINESS_NAME_NAS_DEVPUSHFILE       "7000-NASDevPushFile"     // 设备(NAS)向手机QQ发送文件
 #define BUSINESS_NAME_NAS_DEVPUSHTHUMB      "7001-NASDevPushThumb"    // 设备(NAS)向手机QQ发送缩略图
 
+#define BUSINESS_NAME_NAS_FILE_MUSIC        "8000-NASDevMusicFile"    // 手Q向设备发音乐
+#define BUSINESS_NAME_NAS_FILE_VIDEO        "8001-NASDevVideoFile"    // 手Q向设备发视频(较大的文件)
+#define BUSINESS_NAME_NAS_FILE_DOC          "8002-NASDevDocumentFile" // 手Q向设备发文档
+#define BUSINESS_NAME_NAS_FILE_COMMON       "8003-NASDevCommonFile"   // 手Q向设备发其他文件
+
 // ... 持续添加中
 
 /**

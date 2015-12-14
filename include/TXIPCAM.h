@@ -117,7 +117,7 @@ typedef struct _tx_history_video_notify
 	 * 接口说明: 播放历史视频 step2
 	 * param: play_time  历史视频开始播放的起始时间(unix时间戳)。其中0表示从历史视频播放切换到实时视频播放
 	 */
-	void (*on_play_history_video)(unsigned int play_time);
+	void (*on_play_history_video)(unsigned int play_time, unsigned long long base_time);
 } tx_history_video_notify;
 
 /**

@@ -76,10 +76,12 @@ enum fill80211relust {
 
 typedef struct
 {
-	char                sz_ssid[QLMAX_SSID_LEN];
-	char                sz_password[QLMAX_PSWD_LEN];
-    char                sz_ip[QLMAX_IP_LEN];
-    unsigned short      sh_port;
+	char                sz_ssid[QLMAX_SSID_LEN];      // AP账号名称
+	char                sz_password[QLMAX_PSWD_LEN];  // AP密码
+    char                sz_ip[QLMAX_IP_LEN];          // 发送端IP地址，设备连接AP后反馈给发送端ack时用到
+    unsigned short      sh_port;                      // 发送端端口，  设备连接AP后反馈给发送端ack时用到
+    unsigned char       sz_bssid[6];                  // AP的48位MAC地址， 主要用于连接隐藏SSID广播的AP，厂商可根据实际情况选择是否使用
+	                                                  // 如果设备可以扫描到beacon帧并通过beancon中的信息连接AP则可忽略此成员
 } tx_wifi_sync_param;
 
 
