@@ -8,6 +8,9 @@
 #include "tencent_init.h"
 #include "common.h"
 
+#include "msg_handle.h"
+
+
 
 #undef  TENCENT_CFG_FILE
 #define	 TENCENT_CFG_FILE	"/etc/jffs2/tencent.conf"
@@ -24,44 +27,128 @@
 #define	 DEV_NAME			"ip_camera"
 #define  VERSION_ID			(201512)
 
-#define  DEV_ONLINE			(11)
-#define  DEV_OFFLINE		(21)
 
 
-
-static void on_login_complete(int error_code)
+static void qq_login_complete(int error_code)
 {
+
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+sizeof(login_complete_t)+1);
+	if(NULL == msg)return;
+	
+	login_complete_t * login = (login_complete_t*)(msg+1);
+
+	msg->cmd = LOGIN_COMPLETE_CMD;
+	login->error_code = error_code;
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
+}
+
+static void qq_online_status(int old_status,  int new_status)
+{
+	dbg_printf("old_status==%d  new_status==%d \n",old_status,new_status);
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+sizeof(online_status_t)+1);
+	if(NULL == msg)return;
+	
+	online_status_t * status = (online_status_t*)(msg+1);
+
+	msg->cmd = ONLINE_STATUS_CMD;
+	status->new_status = new_status;
+	status->old_status = old_status;
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
+
+}
+
+void qq_wlan_upload(int error_code, tx_binder_info * pBinderList, int nCount)
+{
+	dbg_printf("qq_wlan_upload-------------------\n");
+	
+
+}
+
+
+static void qq_binder_list_change(int error_code, tx_binder_info * pBinderList, int nCount)
+{
+
 	dbg_printf("error_code===%d \n",error_code);
 
 }
 
-static void on_online_status(int old_status,  int new_status)
-{
-	dbg_printf("old_status==%d  new_status==%d \n",old_status,new_status);
 
-}
-
-
-static void on_binder_list_change(int error_code, tx_binder_info * pBinderList, int nCount)
+static int qq_set_definition(int definition, char *cur_definition, int cur_definition_length)
 {
 
-
-
-}
-
-
-static int on_set_definition(int definition, char *cur_definition, int cur_definition_length)
-{
-
-
+	dbg_printf("definition====%d \n",definition);
 	return(0);
 }
 
-static int on_control_rotate(int rotate_direction, int rotate_degree)
+static int qq_control_rotate(int rotate_direction, int rotate_degree)
 {
 
+	dbg_printf("rotate_degree===%d \n",rotate_degree);
 	return(0);
 }
+
+
+
+static bool qq_start_camera(void)
+{
+
+	dbg_printf("qq_start_camera\n");
+	return(true);
+}
+
+
+static bool qq_stop_camera(void)
+{
+
+	dbg_printf("qq_stop_camera\n");
+	return(true);
+}
+
+static bool qq_set_bitrate(int bit_rate)
+{
+
+	dbg_printf("qq_set_bitrate\n");
+	return(true);
+}
+
+static bool qq_start_mic()
+{
+
+	dbg_printf("qq_start_mic\n");
+	return(true);
+}
+
+
+
+static bool qq_stop_mic()
+{
+
+	dbg_printf("qq_stop_mic\n");
+	return(true);
+}
+
+
+static void qq_recv_audiodata(tx_audio_encode_param *param, unsigned char *pcEncData, int nEncDataLen)
+{
+	dbg_printf("qq_recv_audiodata\n");
+
+}
+
+
+
+
 	
 
 
@@ -243,9 +330,10 @@ void * tencent_get_notify_info(void)
 		return(NULL);
 	}
 
-	new_notify->on_online_status = on_online_status;
-	new_notify->on_login_complete = on_login_complete;
-	new_notify->on_binder_list_change = on_binder_list_change;
+	new_notify->on_online_status = qq_online_status;
+	new_notify->on_login_complete = qq_login_complete;
+	new_notify->on_binder_list_change = qq_binder_list_change;
+	new_notify->on_wlan_upload_register_info_success = qq_wlan_upload;
 
 	return(new_notify);
 }
@@ -347,8 +435,8 @@ fail:
 void tencent_config_log(int level, const char* module, int line, const char* message)
 {
 
-	//if(0==level || 1==level)
-	//printf("line:%d module:%s message:%s \n",line,module,message);
+//	if(0==level || 1==level)
+//	printf("line:%d module:%s message:%s \n",line,module,message);
 }
 
 
@@ -363,8 +451,8 @@ void * tencent_get_ipcamera_notify(void)
 	}
 
 
-	new_notify->on_control_rotate = on_control_rotate;
-	new_notify->on_set_definition = on_set_definition;
+	new_notify->on_control_rotate = qq_control_rotate;
+	new_notify->on_set_definition = qq_set_definition;
 
 	return(new_notify);
 
@@ -382,3 +470,39 @@ void tencent_free_ipcamera_notify(void * arg)
 	free(arg);
 	arg = NULL;
 }
+
+
+
+void * tencent_get_av(void)
+{
+	tx_av_callback * new_av = calloc(1,sizeof(*new_av));
+	if(NULL == new_av)
+	{
+		dbg_printf("calloc is fail ! \n");
+		return(NULL);
+	}
+
+	new_av->on_recv_audiodata = qq_recv_audiodata;
+	new_av->on_set_bitrate = qq_set_bitrate;
+	new_av->on_start_camera = qq_start_camera;
+	new_av->on_stop_camera = qq_stop_camera;
+	new_av->on_start_mic = qq_start_mic;
+	new_av->on_stop_mic = qq_stop_mic;
+
+	return(new_av);
+	
+}
+
+
+void  tencent_free_av(void * arg)
+{
+	if(NULL == arg)
+	{
+		dbg_printf("this is null ! \n");
+		return;
+	}
+	free(arg);
+	arg = NULL;
+}
+
+

@@ -1,6 +1,10 @@
 #ifndef  _COMMON_H
 #define  _COMMON_H
 
+#define  compare_and_swap(lock,old,set)		__sync_bool_compare_and_swap(lock,old,set)
+#define  fetch_and_add(value,add)			__sync_fetch_and_add(value,add)
+#define	 fetch_and_sub(value,sub)			__sync_fetch_and_sub(value,sub)	
+
 
 #undef  DBG_ON
 #undef  FILE_NAME

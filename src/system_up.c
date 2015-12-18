@@ -5,9 +5,12 @@
 
 
 #include "common.h"
+#include "system_up.h"
+
+
 #include "TXDeviceSDK.h"
 #include "tencent_init.h"
-
+#include "msg_handle.h"
 
 
 #undef  	DBG_ON
@@ -16,18 +19,11 @@
 #define 	FILE_NAME 	"system_up:"
 
 
-typedef struct system_config
-{
-	tx_device_info * dev_info; 
-	tx_device_notify * dev_notify;
-	tx_init_path * dev_path; 
-
-
-}system_config_t;
 
 
 
-static system_config_t * system_config_info = NULL;
+
+system_config_t * system_config_info = NULL;
 
 
 void system_free_config(void * arg)
@@ -46,6 +42,10 @@ void system_free_config(void * arg)
 	
 	if(NULL != sys->dev_path)
 		tencent_free_path_config(sys->dev_path);
+
+	if(NULL != sys->dev_av)
+		tencent_free_av(sys->dev_av);
+		
 	
 	if(NULL != arg);
 	{
@@ -59,7 +59,6 @@ void system_free_config(void * arg)
 int system_tencent_init(void * arg)
 {
 	
-
 	if(NULL == arg)
 	{
 		dbg_printf("this is null ! \n");
@@ -70,18 +69,26 @@ int system_tencent_init(void * arg)
 
 	sys->dev_info 		= tencent_get_dev_info();
 	sys->dev_notify 	= tencent_get_notify_info();
-	sys->dev_path 		= tencent_get_path_config();
-	if(NULL == sys->dev_info || NULL==sys->dev_notify || NULL == sys->dev_path) goto fail;
+	sys->dev_path 		= tencent_get_path_config(); 
+	if(NULL == sys->dev_info || NULL==sys->dev_notify || NULL == sys->dev_path)
+	{
+	
+		goto fail;
+	}
 	tx_set_log_func(tencent_config_log);
 	
-	ret = tx_init_device(sys->dev_info,sys->dev_notify,sys->dev_path);
+	ret = tx_init_device((tx_device_info*)sys->dev_info,(tx_device_notify*)sys->dev_notify,(tx_init_path*)sys->dev_path);
 	if(err_null != ret)
 	{
 		dbg_printf("tx_init_device is fail ! \n");
 		goto fail;
 	}
 
+	sys->dev_av = tencent_get_av();
+	sys->online_status = DEV_OFFLINE;
 
+
+	
 	return(0);
 
 fail:
@@ -111,8 +118,16 @@ int system_up(void)
 	{
 		dbg_printf("calloc is fail ! \n");
 		return(-1);
-
 	}
+
+	ret = msg_handle_start_up();
+	if(0 != ret)
+	{
+		dbg_printf("msg_handle_start_up is fail \n");
+		return(-1);
+	}
+
+	
 	
 	ret = system_tencent_init(system_config_info);
 
@@ -127,11 +142,10 @@ int system_up(void)
 
 	}
 
+
 	while(1)
 	{
 		sleep(10);
-
-
 	}
 
 	

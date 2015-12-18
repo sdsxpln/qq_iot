@@ -19,6 +19,7 @@ LOCAL_DEV_SRC := \
 		$(LOCAL_SRC)/parser_inifile.c	\
 		$(LOCAL_SRC)/ring_queue.c  \
 		$(LOCAL_SRC)/tencent_init.c  \
+		$(LOCAL_SRC)/msg_handle.c  \
 		$(LOCAL_SRC)/system_up.c  \
 		$(LOCAL_SRC)/main.c	
 

@@ -11,5 +11,7 @@ void tencent_free_ipcamera_notify(void * arg);
 void  tencent_free_path_config(void * arg);
 void * tencent_get_path_config(void);
 void tencent_config_log(int level, const char* module, int line, const char* message);
+void * tencent_get_av(void);
+void  tencent_free_av(void * arg);
 
 #endif  /*_tencent_init_h*/
