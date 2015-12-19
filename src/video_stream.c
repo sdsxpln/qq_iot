@@ -32,6 +32,9 @@ typedef enum
 }frame_type_m;
 
 
+
+
+
 typedef struct video_encode_handle
 {
 	void * handle;
@@ -56,6 +59,8 @@ typedef struct video_stream_handle
 
 	camera_dev_t * video_dev;
 	video_encode_handle_t * encode_handle;
+
+	
 
 	int  qp;
 	char iframe_gap;
@@ -173,12 +178,14 @@ static  void * video_new_encode(unsigned int bps)
 	T_VIDEOLIB_ENC_OPEN_INPUT open_input;
 	memset(&open_input,0,sizeof(open_input));
 	open_input.encFlag = VIDEO_DRV_H264;
+
 	open_input.encH264Par.width = VIDEO_WIDTH_720P;		
-	open_input.encH264Par.height = VIDEO_HEIGHT_720P;			
+	open_input.encH264Par.height = VIDEO_HEIGHT_720P;
 	open_input.encH264Par.lumWidthSrc = VIDEO_WIDTH_720P;
 	open_input.encH264Par.lumHeightSrc = VIDEO_HEIGHT_720P;
-	open_input.encH264Par.horOffsetSrc = 0;
-	open_input.encH264Par.verOffsetSrc = 0;
+	open_input.encH264Par.horOffsetSrc = (open_input.encH264Par.lumWidthSrc-open_input.encH264Par.width)/2;
+	open_input.encH264Par.verOffsetSrc = (open_input.encH264Par.lumHeightSrc-open_input.encH264Par.height)/2;
+	
 	open_input.encH264Par.rotation = ENC_ROTATE_0;		
 	open_input.encH264Par.frameRateDenom = 1;
 	open_input.encH264Par.frameRateNum = 15;	
@@ -192,7 +199,7 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.qpMax = 36;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
-    open_input.encH264Par.gopLen = 30; 
+    open_input.encH264Par.gopLen = 45; 
 
 	new_handle->rc.qpHdr = -1;
 	new_handle->rc.qpMin = open_input.encH264Par.qpMin;
@@ -485,27 +492,7 @@ static void * video_encode_pthread(void * arg)
 		size = video_encode_frame(handle->encode_handle,(void*)frame_buf->m.userptr,&out_buff,i_frame);
 		if(size > 0 && size < 40*1024)
 		{
-
-			#if 0
-			msg_header_t * msg = calloc(1,sizeof(*msg)+sizeof(video_data_t)+1);
-			if(NULL != msg)
-			{
-
-				video_data_t * video = 	(video_data_t *)(msg+1);
-				msg->cmd = VIDEO_DATA_CMD;
-				video->nFrameType = i_frame;
-				video->nTimeStamps = timeStamp;
-				video->nFrameIndex = nFrameIndex;
-				video->nGopIndex = nGopIndex;
-				video->nTotalIndex = nTotalIndex;
-				video->nEncDataLen = size;
-				memmove(video->data,out_buff,size);
-				msg_push(msg);
-			}
-			#else
-			
-				tx_set_video_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex,30);
-			#endif
+			tx_set_video_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex,30);
 		}
 
 		camera_free_frame(dev,frame_buf);
@@ -558,16 +545,15 @@ static  int video_stream_init(void)
 		goto fail;
 	}
 
-	stream_handle->encode_handle = video_new_encode(300*1024);
+	stream_handle->encode_handle = video_new_encode(100*1024);
 	if(NULL == stream_handle->encode_handle)
 	{
 		dbg_printf("video_new_encode is fail !\n");
 		goto fail;
 	}
-
 	stream_handle->frame_count = 0;
 	stream_handle->force_iframe = 0;
-	stream_handle->iframe_gap = 30;
+	stream_handle->iframe_gap = 45;
 
 	
 	return(0);
