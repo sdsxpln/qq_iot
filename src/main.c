@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "system_up.h"
+#include "sync_time.h"
 
 
 #undef  	DBG_ON
@@ -43,6 +44,9 @@ int main(void)
 	signal(SIGSEGV, sigprocess);
 	signal(SIGINT, sigprocess);
 	signal(SIGTERM, sigprocess);
+	sync_time_up();
+	
+	
 	system_up();
 	return(0);
 }

@@ -7,6 +7,11 @@ typedef enum cmd_type
 
 	LOGIN_COMPLETE_CMD,
 	ONLINE_STATUS_CMD,
+	START_VIDEO_CMD,
+	STOP_VIDEO_CMD,
+	VIDEO_DATA_CMD,
+	VOICE_DATA_CMD,
+	
 
 
 }cmd_type_t;
@@ -33,6 +38,20 @@ typedef struct online_status
 	int new_status;
 	
 }online_status_t;
+
+
+
+typedef struct video_data
+{
+	int nFrameType;
+	int nTimeStamps;
+	int nGopIndex;
+	int nFrameIndex;
+	int nTotalIndex;
+	int nEncDataLen;
+	unsigned char data[40*1024];
+	
+}video_data_t;
 
 
 

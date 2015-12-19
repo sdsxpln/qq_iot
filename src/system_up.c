@@ -11,6 +11,7 @@
 #include "TXDeviceSDK.h"
 #include "tencent_init.h"
 #include "msg_handle.h"
+#include "video_stream.h"
 
 
 #undef  	DBG_ON
@@ -128,19 +129,26 @@ int system_up(void)
 	}
 
 	
-	
 	ret = system_tencent_init(system_config_info);
 
 	if(ret != 0 )
 	{
 		dbg_printf("system_tencent_init is fail ! \n");
-
 	}
 	else
 	{
 		dbg_printf("system_tencent_init is succed ! \n");
-
 	}
+
+	ret = akuio_pmem_init();
+	if(0 != ret)
+	{
+		dbg_printf("akuio_pmem_init \n");
+		return(-1);
+	}
+	
+
+	ret = video_stream_up();
 
 
 	while(1)

@@ -105,6 +105,18 @@ static bool qq_start_camera(void)
 {
 
 	dbg_printf("qq_start_camera\n");
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+1);
+	if(NULL == msg)return;
+	msg->cmd = START_VIDEO_CMD;
+
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
+
 	return(true);
 }
 
@@ -112,7 +124,19 @@ static bool qq_start_camera(void)
 static bool qq_stop_camera(void)
 {
 
+
 	dbg_printf("qq_stop_camera\n");
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+1);
+	if(NULL == msg)return;
+	msg->cmd = STOP_VIDEO_CMD;
+
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
 	return(true);
 }
 

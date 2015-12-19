@@ -9,6 +9,7 @@
 #include "ring_queue.h"
 #include "system_up.h"
 #include "TXAudioVideo.h"
+#include "video_stream.h"
 
 
 #undef  	DBG_ON
@@ -17,6 +18,10 @@
 #define 	FILE_NAME 	"handle_msg:"
 
 
+
+/*--------------------------------------------------------------------------------------------------*/
+/*recv  msg handle
+/*--------------------------------------------------------------------------------------------------*/
 typedef struct msg_handle
 {
 	pthread_mutex_t msg_mutex;
@@ -163,10 +168,36 @@ static int msg_online_status(void * arg)
 
 	}
 
-
 	return(0);
 }
 
+
+static int msg_start_video(void)
+{
+	video_capture_start();
+	return(0);
+}
+
+
+
+static int msg_stop_video(void)
+{
+	video_capture_stop();
+	return(0);
+}
+
+
+static int send_video_data(void * arg)
+{
+	if(NULL == arg)
+	{
+		dbg_printf("the parma is null ! \n");
+		return(-1);
+	}
+	video_data_t *	video =  (video_data_t *)arg;
+	tx_set_video_data(video->data,video->nEncDataLen,video->nFrameType,video->nTimeStamps,video->nGopIndex,video->nFrameIndex,video->nTotalIndex,30);	
+	return(0);
+}
 
 
 static void * msg_handle_pthread(void * arg)
@@ -202,6 +233,24 @@ static void * msg_handle_pthread(void * arg)
 		switch(packet->cmd)
 		{
 
+			case VIDEO_DATA_CMD:
+			{
+				send_video_data(packet+1);
+				break;
+			}
+			case STOP_VIDEO_CMD:
+			{
+
+				msg_stop_video();
+				break;
+			}
+
+			case START_VIDEO_CMD:
+			{
+				msg_start_video();
+				break;
+			}
+			
 			case ONLINE_STATUS_CMD:
 			{
 				msg_online_status(packet+1);
@@ -214,7 +263,6 @@ static void * msg_handle_pthread(void * arg)
 				break;
 			}
 
-
 			default:
 			{
 				dbg_printf("unknow cmd type ! \n");
@@ -225,14 +273,10 @@ static void * msg_handle_pthread(void * arg)
 		}
 
 		
-		
-
-
 		free(packet);
 		packet = NULL;
 
 	}
-
 
 
 }
@@ -255,6 +299,10 @@ int msg_handle_start_up(void)
 
 	return(0);
 }
+
+
+
+
 
 
 
