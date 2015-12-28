@@ -32,6 +32,12 @@ typedef enum
 }frame_type_m;
 
 
+typedef enum
+{	
+	SEND_VIDEO = (0x01<<1),
+	RECORD_VIDEO = (0x01 << 2),
+	UNKNOW_MODE,
+}video_mode_t;
 
 
 
@@ -57,6 +63,17 @@ typedef struct video_stream_handle
 	ring_queue_t raw_msg_queue;
 	volatile unsigned int raw_msg_num;
 
+
+	pthread_mutex_t mutex_record;
+	pthread_cond_t cond_record;
+	ring_queue_t record_msg_queue;
+	volatile unsigned int record_msg_num;
+
+
+	pthread_mutex_t mutex_video_mode;
+	volatile unsigned int video_mode;
+	
+
 	camera_dev_t * video_dev;
 	video_encode_handle_t * encode_handle;
 	
@@ -71,9 +88,11 @@ typedef struct video_stream_handle
 }video_stream_handle_t;
 
 
+#define  VIDEO_BUFFER_COUNTS	(32)
+
 static video_stream_handle_t *  stream_handle = NULL;
 
-
+static video_data_t video_data_buff[VIDEO_BUFFER_COUNTS]={0};
 
 static T_pVOID enc_mutex_create(T_VOID)
 {
@@ -304,7 +323,7 @@ int video_encode_reSetRc(int bit_rate)
 
 
 
-static int stream_push_msg(void * data )
+static int stream_push_raw_data(void * data )
 {
 
 	int ret = 1;
@@ -347,7 +366,79 @@ static int stream_push_msg(void * data )
 }
 
 
-int video_capture_start(void)
+static int stream_push_record_data(void * data )
+{
+
+	int ret = 1;
+	int i = 0;
+	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
+	if(NULL == handle || NULL== data)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+
+	pthread_mutex_lock(&(handle->mutex_record));
+
+	for (i = 0; i < 1000; i++)
+	{
+	    ret = ring_queue_push(&handle->record_msg_queue, data);
+	    if (ret < 0)
+	    {
+	        usleep(i);
+	        continue;
+	    }
+	    else
+	    {
+	        break;
+	    }	
+	}
+    if (ret < 0)
+    {
+		pthread_mutex_unlock(&(handle->mutex_record));
+		return (-2);
+    }
+    else
+    {
+		volatile unsigned int *task_num = &handle->record_msg_num;
+    	fetch_and_add(task_num, 1);
+    }
+    pthread_mutex_unlock(&(handle->mutex_record));
+	pthread_cond_signal(&(handle->cond_record));
+	return(0);
+}
+
+
+static int  video_fill_record_data(unsigned char *pcEncData, int nEncDataLen,int nFrameType, int nTimeStamps, int nGopIndex, int nFrameIndex, int nTotalIndex)
+{
+	int i = 0;
+	video_data_t * video = video_data_buff;
+	if(nEncDataLen <= 0  ||  nEncDataLen > 40960)return(-1);
+	
+	for(i=0;i<VIDEO_BUFFER_COUNTS;++i)
+	{
+		if(0 == video->status)
+		{
+			video->status = 1;
+			video->nFrameType = nFrameType;
+			video->nTimeStamps = nTimeStamps;
+			video->nGopIndex = nGopIndex;
+			video->nFrameIndex = nFrameIndex;
+			video->nTotalIndex = nTotalIndex;
+			video->nEncDataLen = nEncDataLen;
+			memmove(video->data,pcEncData,video->nEncDataLen);
+			stream_push_record_data(video);
+			break;
+		}
+		video += 1;
+	}
+		
+	return(0);
+}
+        
+
+
+static int video_capture_start(void)
 {
 
 	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
@@ -370,7 +461,7 @@ int video_capture_start(void)
 
 
 
-int  video_capture_stop(void)
+static int  video_capture_stop(void)
 {
 
 
@@ -393,6 +484,78 @@ int  video_capture_stop(void)
 	dbg_printf("video_capture_stop\n");
 	return(0);
 }
+
+
+int video_send_video_start(void)
+{
+
+	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
+	if(NULL == handle)return(-1);
+
+	pthread_mutex_lock(&(handle->mutex_video_mode));
+	handle->video_mode |= SEND_VIDEO;
+	video_capture_start();
+	pthread_mutex_unlock(&(handle->mutex_video_mode));
+	
+
+	return(0);
+}
+
+
+int video_send_video_stop(void)
+{
+	
+	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
+	if(NULL == handle)return(-1);
+
+	pthread_mutex_lock(&(handle->mutex_video_mode));
+	handle->video_mode &= ~SEND_VIDEO;
+	if(0 == (handle->video_mode & RECORD_VIDEO))
+	{
+		video_capture_stop();	
+	}
+	pthread_mutex_unlock(&(handle->mutex_video_mode));
+
+	
+
+	return(0);
+}
+
+
+int video_record_video_start(void)
+{
+	
+	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
+	if(NULL == handle)return(-1);
+
+	pthread_mutex_lock(&(handle->mutex_video_mode));
+	handle->video_mode |= RECORD_VIDEO;
+	video_capture_start();
+	pthread_mutex_unlock(&(handle->mutex_video_mode));
+	
+	return(0);
+}
+
+
+int video_record_video_stop(void)
+{
+	
+	video_stream_handle_t * handle = (video_stream_handle_t*)stream_handle;
+	if(NULL == handle)return(-1);
+
+	pthread_mutex_lock(&(handle->mutex_video_mode));
+	handle->video_mode &= ~RECORD_VIDEO;
+	if(0 == (handle->video_mode & SEND_VIDEO))
+	{
+		video_capture_stop();	
+	}
+	pthread_mutex_unlock(&(handle->mutex_video_mode));
+	return(0);
+}
+
+
+
+
 
 
 static void * video_capture_pthread(void * arg)
@@ -422,7 +585,7 @@ static void * video_capture_pthread(void * arg)
 		
 		frame_buf = camera_read_frame(dev);
 		if(NULL == frame_buf)continue;
-		ret = stream_push_msg(frame_buf);
+		ret = stream_push_raw_data(frame_buf);
 		if(0 != ret)
 		{
 			camera_free_frame(dev,frame_buf);
@@ -462,6 +625,7 @@ static void * video_encode_pthread(void * arg)
 	unsigned long nGopIndex = 0;
 	unsigned long nFrameIndex = 0;
 	unsigned long nTotalIndex = 0;
+
 	while(is_run)
 	{
         pthread_mutex_lock(&(handle->mutex_encode));
@@ -506,17 +670,63 @@ static void * video_encode_pthread(void * arg)
 
 		timeStamp = frame_buf->timestamp.tv_sec * 1000ULL + frame_buf->timestamp.tv_usec / 1000ULL;
 		size = video_encode_frame(handle->encode_handle,(void*)frame_buf->m.userptr,&out_buff,i_frame);
-		if(size > 0 && size < 40*1024)
+
+		if(handle->video_mode & SEND_VIDEO)
 		{
-		//	dbg_printf("size====%d  i_frame==%d \n",size,i_frame);
 			tx_set_video_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex,30);
 		}
+
+		if(handle->video_mode & RECORD_VIDEO)
+		{
+			video_fill_record_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex);
+		}
+		
 
 		camera_free_frame(dev,frame_buf);
 
 	}
 
 	return(NULL);
+
+}
+
+
+static void * video_record_pthread(void * arg)
+{
+	if(NULL == arg)
+	{
+		dbg_printf("please check the param ! \n");
+		return(NULL);
+	}
+	
+	video_stream_handle_t * handle = (video_stream_handle_t*)arg;
+	int ret = -1;
+	int is_run = 1;
+	video_data_t *	video = NULL;
+
+	while(is_run)
+	{
+
+        pthread_mutex_lock(&(handle->mutex_record));
+        while (0 == handle->record_msg_num)
+        {
+            pthread_cond_wait(&(handle->cond_record), &(handle->mutex_record));
+        }
+		ret = ring_queue_pop(&(handle->record_msg_queue), (void **)&video);
+		pthread_mutex_unlock(&(handle->mutex_record));
+		
+		volatile unsigned int * num = &(handle->record_msg_num);
+		fetch_and_sub(num, 1); 
+
+		if(ret != 0 || NULL == video)continue;
+
+
+		video->status = 0;
+
+	}
+
+	return(NULL);
+
 
 }
 
@@ -555,6 +765,21 @@ static  int video_stream_init(void)
 	stream_handle->raw_msg_num = 0;
 
 
+	ret = ring_queue_init(&stream_handle->record_msg_queue, 1024);
+	if(ret < 0 )
+	{
+		dbg_printf("ring_queue_init  fail \n");
+
+	}
+    pthread_mutex_init(&(stream_handle->mutex_record), NULL);
+    pthread_cond_init(&(stream_handle->cond_record), NULL);
+	stream_handle->record_msg_num = 0;
+	
+
+	pthread_mutex_init(&(stream_handle->mutex_video_mode), NULL);
+	
+
+	
 	stream_handle->video_dev = (camera_dev_t*)camera_new_dev(CAMERA_DEVICE);
 	if(NULL == stream_handle->video_dev)
 	{
@@ -572,7 +797,7 @@ static  int video_stream_init(void)
 	stream_handle->frame_count = 0;
 	stream_handle->force_iframe = 0;
 	stream_handle->iframe_gap = 40;
-
+	stream_handle->video_mode = 0;
 	
 	return(0);
 
@@ -618,6 +843,8 @@ int video_stream_up(void)
 		return(-1);
 	}
 
+	memset(video_data_buff,0,sizeof(video_data_buff));
+
 	
 
 	pthread_t raw_video_pthid;
@@ -628,6 +855,14 @@ int video_stream_up(void)
 	pthread_t encode_video_pthid;
 	ret = pthread_create(&encode_video_pthid,NULL,video_encode_pthread,stream_handle);
 	pthread_detach(encode_video_pthid);
+
+
+
+	pthread_t record_pthid;
+	ret = pthread_create(&record_pthid,NULL,video_record_pthread,stream_handle);
+	pthread_detach(record_pthid);
+
+
 
 	return(0);
 }

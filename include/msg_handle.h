@@ -52,6 +52,7 @@ typedef struct set_bitrate
 
 typedef struct video_data
 {
+	int status;
 	int nFrameType;
 	int nTimeStamps;
 	int nGopIndex;
