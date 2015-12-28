@@ -172,6 +172,21 @@ static int msg_online_status(void * arg)
 }
 
 
+static int msg_set_bitrate(void * arg)
+{
+	if(NULL == arg)
+	{
+		dbg_printf("the param is null,check it ! \n");
+		return(-1);
+	}
+	set_bitrate_t * bitrate = (void *)arg;	
+	video_encode_reSetRc(bitrate->bit_rate);
+
+
+	return(0);
+}
+
+
 static int msg_start_video(void)
 {
 	video_capture_start();
@@ -242,6 +257,13 @@ static void * msg_handle_pthread(void * arg)
 			{
 
 				msg_stop_video();
+				break;
+			}
+
+			case SET_BITRATE_CMD:
+			{
+
+				msg_set_bitrate(packet+1);
 				break;
 			}
 

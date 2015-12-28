@@ -21,6 +21,7 @@ LOCAL_DEV_SRC := \
 		$(LOCAL_SRC)/parser_inifile.c	\
 		$(LOCAL_SRC)/ring_queue.c  \
 		$(LOCAL_SRC)/sync_time.c  \
+		$(LOCAL_SRC)/monitor_dev.c  \
 		$(LOCAL_SRC)/tencent_init.c  \
 		$(LOCAL_SRC)/msg_handle.c  \
 		$(LOCAL_SRC)/isp_conf_file.c  \

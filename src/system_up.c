@@ -12,6 +12,7 @@
 #include "tencent_init.h"
 #include "msg_handle.h"
 #include "video_stream.h"
+#include "monitor_dev.h"
 
 
 #undef  	DBG_ON
@@ -103,7 +104,10 @@ fail:
 
 
 
+/*
+用 pread 和 pwrite来处理录像回放的问题，还有writev和readv
 
+*/
 int system_up(void)
 {
 
@@ -120,6 +124,8 @@ int system_up(void)
 		dbg_printf("calloc is fail ! \n");
 		return(-1);
 	}
+
+	monitor_start_up();
 
 	ret = msg_handle_start_up();
 	if(0 != ret)

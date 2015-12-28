@@ -143,7 +143,22 @@ static bool qq_stop_camera(void)
 static bool qq_set_bitrate(int bit_rate)
 {
 
-	dbg_printf("qq_set_bitrate\n");
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+sizeof(set_bitrate_t)+1);
+	if(NULL == msg)return;
+	
+	set_bitrate_t * bitrate = (set_bitrate_t*)(msg+1);
+
+	msg->cmd = SET_BITRATE_CMD;
+	bitrate->bit_rate = bit_rate;
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
+	
+	
 	return(true);
 }
 

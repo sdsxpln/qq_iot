@@ -9,6 +9,7 @@ typedef enum cmd_type
 	ONLINE_STATUS_CMD,
 	START_VIDEO_CMD,
 	STOP_VIDEO_CMD,
+	SET_BITRATE_CMD,
 	VIDEO_DATA_CMD,
 	VOICE_DATA_CMD,
 	
@@ -38,6 +39,14 @@ typedef struct online_status
 	int new_status;
 	
 }online_status_t;
+
+
+typedef struct set_bitrate
+{
+	int bit_rate;
+
+}set_bitrate_t;
+
 
 
 

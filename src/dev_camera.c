@@ -414,8 +414,6 @@ void * camera_new_dev(const char * dev_path)
 		return(NULL);
 	}
 
-	dbg_printf("66666666666666666666666666666666\n");
-	
 	new_camera->camera_fd = open (dev_path, O_RDWR| O_NONBLOCK,0);
 	if(new_camera->camera_fd < 0 )
 	{
@@ -423,7 +421,6 @@ void * camera_new_dev(const char * dev_path)
 		goto fail;
 	}
 
-	dbg_printf("7777777777777777777777777777777777777\n");
 	fcntl(new_camera->camera_fd, F_SETFD, FD_CLOEXEC);
 
 	new_camera->video_height = VIDEO_HEIGHT_720P;

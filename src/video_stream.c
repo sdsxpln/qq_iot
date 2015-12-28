@@ -59,10 +59,11 @@ typedef struct video_stream_handle
 
 	camera_dev_t * video_dev;
 	video_encode_handle_t * encode_handle;
+	
 
 	
 
-	int  qp;
+	int  bit_rate;
 	char iframe_gap;
 	char force_iframe;
 	char frame_count;
@@ -199,7 +200,7 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.qpMax = 36;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
-    open_input.encH264Par.gopLen = 45; 
+    open_input.encH264Par.gopLen = 40; 
 
 	new_handle->rc.qpHdr = -1;
 	new_handle->rc.qpMin = open_input.encH264Par.qpMin;
@@ -280,10 +281,25 @@ static int video_encode_frame(video_encode_handle_t * pencode_handle, void *pinb
 
 
 
-static int video_encode_reSetRc(video_encode_handle_t * pencode_handle, int qp)
+int video_encode_reSetRc(int bit_rate)
 {
-    pencode_handle->rc.bitPerSecond = qp*1024;
-	return VideoStream_Enc_setRC(pencode_handle->handle, &pencode_handle->rc);
+
+	dbg_printf("bit_rate===%d \n",bit_rate);
+	if(NULL == stream_handle || NULL==stream_handle->encode_handle)
+	{
+		dbg_printf("please check the param ! \n");
+		return(-1);
+	}
+	video_encode_handle_t * pencode_handle = stream_handle->encode_handle;
+
+	if(bit_rate > 400)bit_rate=400;
+	if(bit_rate != stream_handle->bit_rate)
+	{
+		stream_handle->bit_rate = bit_rate;
+		 pencode_handle->rc.bitPerSecond = bit_rate*1024;
+		 VideoStream_Enc_setRC(pencode_handle->handle, &pencode_handle->rc);
+	}
+	return (0) ;
 }
 
 
@@ -492,6 +508,7 @@ static void * video_encode_pthread(void * arg)
 		size = video_encode_frame(handle->encode_handle,(void*)frame_buf->m.userptr,&out_buff,i_frame);
 		if(size > 0 && size < 40*1024)
 		{
+		//	dbg_printf("size====%d  i_frame==%d \n",size,i_frame);
 			tx_set_video_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex,30);
 		}
 
@@ -545,7 +562,8 @@ static  int video_stream_init(void)
 		goto fail;
 	}
 
-	stream_handle->encode_handle = video_new_encode(100*1024);
+	stream_handle->bit_rate = 200;
+	stream_handle->encode_handle = video_new_encode(stream_handle->bit_rate*1024);
 	if(NULL == stream_handle->encode_handle)
 	{
 		dbg_printf("video_new_encode is fail !\n");
@@ -553,7 +571,7 @@ static  int video_stream_init(void)
 	}
 	stream_handle->frame_count = 0;
 	stream_handle->force_iframe = 0;
-	stream_handle->iframe_gap = 45;
+	stream_handle->iframe_gap = 40;
 
 	
 	return(0);

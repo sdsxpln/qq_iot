@@ -130,7 +130,7 @@ static void * sync_time(void * arg)
 		total_secs = recv_secs;
 		now = localtime(&total_secs);
 
-		sprintf(set_time," date -s \"%02d-%02d-%02d  %02d:%02d:%02d \" ",now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
+		sprintf(set_time," date -s \"%02d-%02d-%02d  %02d:%02d:%02d\"",now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
 		system(set_time);
 		system(" hwclock  -w ") ;
 		sleep(1);
