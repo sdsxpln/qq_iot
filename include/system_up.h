@@ -8,6 +8,7 @@ typedef struct system_config
 	void * dev_notify;
 	void * dev_path; 	
 	void * dev_av;	
+	void * dev_histry;
 
 	char  online_status;
 	

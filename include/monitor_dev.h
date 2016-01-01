@@ -9,8 +9,8 @@
 
 
 
- int monitor_start_up(void);
-
+int monitor_start_up(void);
+int mmc_get_status(void);
 
 #endif  /*_monitor_dev_h*/
 

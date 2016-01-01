@@ -5,6 +5,7 @@
 
 #include "TXDeviceSDK.h"
 #include "TXIPCAM.h"
+
 #include "tencent_init.h"
 #include "common.h"
 
@@ -186,6 +187,31 @@ static void qq_recv_audiodata(tx_audio_encode_param *param, unsigned char *pcEnc
 }
 
 
+#include <time.h>
+static void  qq_fetch_history_video(unsigned int last_time, int max_count, int *count, tx_history_video_range * range_list)
+{
+
+	last_time  +=  8*60*60;
+	dbg_printf("last_time==%ld  max_count==%ld \n",last_time,max_count);
+	struct tm *now;
+	now = localtime((time_t*)&last_time);
+	dbg_printf("%02d-%02d-%02d  %02d:%02d:%02d\n", now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
+
+	fetch_history_video(last_time,max_count,count,range_list);
+
+}
+
+
+static  void qq_play_history_video(unsigned int play_time, unsigned long long base_time)
+{
+
+	struct tm *now;
+	now = localtime((time_t*)&play_time);
+	dbg_printf("play_time_%02d-%02d-%02d  %02d:%02d:%02d\n", now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
+
+
+
+}
 
 
 	
@@ -543,5 +569,33 @@ void  tencent_free_av(void * arg)
 	free(arg);
 	arg = NULL;
 }
+
+
+void * tencent_get_hisplay(void)
+{
+	tx_history_video_notify * new_his = calloc(1,sizeof(tx_history_video_notify));
+	if(NULL == new_his)
+	{
+		dbg_printf("calloc is fail ! \n");
+		return(NULL);
+	}
+	new_his->on_fetch_history_video = qq_fetch_history_video;
+	new_his->on_play_history_video = qq_play_history_video;
+
+	return(new_his);
+
+}
+
+
+void  tencent_free_hisplay(void * arg)
+{
+	if(NULL != arg)
+	{
+		free(arg);
+		arg = NULL;
+	}
+
+}
+
 
 

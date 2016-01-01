@@ -8,6 +8,7 @@
 #include "msg_handle.h"
 #include "ring_queue.h"
 #include "system_up.h"
+#include "TXIPCAM.h"
 #include "TXAudioVideo.h"
 #include "video_stream.h"
 
@@ -19,9 +20,7 @@
 
 
 
-/*--------------------------------------------------------------------------------------------------*/
-/*recv  msg handle
-/*--------------------------------------------------------------------------------------------------*/
+
 typedef struct msg_handle
 {
 	pthread_mutex_t msg_mutex;
@@ -157,11 +156,13 @@ static int msg_online_status(void * arg)
 		if(DEV_ONLINE == status->new_status)
 		{
 			ret = tx_start_av_service((tx_av_callback*)system_config_info->dev_av);
+			tx_init_history_video_notify((tx_history_video_notify*)system_config_info->dev_histry);
+
 		}
 		else if(DEV_OFFLINE == status->new_status)
 		{
 			ret= tx_stop_av_service();	
-
+			
 		}
 		dbg_printf("ret ====== %d \n",ret);
 		

@@ -49,19 +49,45 @@ typedef struct set_bitrate
 
 
 
-
+#define  VIDEO_DATA_MAX_SIZE	 (30720)/*(30*1024)*/
 typedef struct video_data
 {
-	int status;
-	int nFrameType;
-	int nTimeStamps;
-	int nGopIndex;
-	int nFrameIndex;
-	int nTotalIndex;
-	int nEncDataLen;
-	unsigned char data[40*1024];
+	unsigned int status;
+	unsigned int nFrameType;
+	unsigned int nEncDataLen;
+	unsigned int nTimeStamps;
+	unsigned int nGopIndex;
+	unsigned int nFrameIndex;
+	unsigned int nTotalIndex;
+	unsigned char data[VIDEO_DATA_MAX_SIZE];
 	
 }video_data_t;
+
+
+
+typedef struct  video_iframe_index
+{
+	char magic[10];
+	unsigned long time_stamp;
+	unsigned long offset;
+	
+
+}video_iframe_index_t;
+
+
+typedef struct  video_node_header
+{
+	unsigned int total_size;
+	unsigned int check_flag;  /*nTotalIndex+nFrameIndex+nGopIndex+nFrameType*/
+}video_node_header_t;
+
+
+
+
+
+
+
+
 
 
 

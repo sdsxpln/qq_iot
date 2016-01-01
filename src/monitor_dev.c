@@ -100,6 +100,8 @@ static void * monitor_fun(void * arg)
 	int i = 0;
 	int epfd = -1;
 	int mmc_fd = -1;
+	
+	umount(MMC_PATH);
 	mmc_process(1);
 	struct epoll_event ev;
 	struct epoll_event events[16];

@@ -11,6 +11,7 @@
 #include "TXDeviceSDK.h"
 #include "tencent_init.h"
 #include "msg_handle.h"
+#include "TXIPCAM.h"
 #include "video_stream.h"
 #include "monitor_dev.h"
 
@@ -87,9 +88,16 @@ int system_tencent_init(void * arg)
 	}
 
 	sys->dev_av = tencent_get_av();
+
+	sys->dev_histry = tencent_get_hisplay();
+	
+
+	
 	sys->online_status = DEV_OFFLINE;
 
 
+
+	
 	
 	return(0);
 
@@ -152,9 +160,12 @@ int system_up(void)
 		dbg_printf("akuio_pmem_init \n");
 		return(-1);
 	}
-	
-
 	ret = video_stream_up();
+
+	sleep(2);
+	record_start_up();
+	sleep(1);
+	video_record_video_start();
 
 
 	while(1)
