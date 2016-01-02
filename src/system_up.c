@@ -2,12 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-
 #include "common.h"
 #include "system_up.h"
-
-
 #include "TXDeviceSDK.h"
 #include "tencent_init.h"
 #include "msg_handle.h"
@@ -20,10 +16,6 @@
 #undef  	FILE_NAME
 #define 	DBG_ON  	(0x01)
 #define 	FILE_NAME 	"system_up:"
-
-
-
-
 
 
 system_config_t * system_config_info = NULL;
@@ -88,17 +80,10 @@ int system_tencent_init(void * arg)
 	}
 
 	sys->dev_av = tencent_get_av();
-
 	sys->dev_histry = tencent_get_hisplay();
-	
-
-	
 	sys->online_status = DEV_OFFLINE;
 
 
-
-	
-	
 	return(0);
 
 fail:
@@ -116,6 +101,82 @@ fail:
 用 pread 和 pwrite来处理录像回放的问题，还有writev和readv
 
 */
+
+int system_up(void)
+{
+
+	int ret = -1;
+	if(system_config_info != NULL )
+	{
+		dbg_printf("system has been init ! \n");
+		return(-1);
+	}
+
+	system_config_info = calloc(1,sizeof(*system_config_info));
+	if(NULL == system_config_info)
+	{
+		dbg_printf("calloc is fail ! \n");
+		return(-1);
+	}
+	
+	monitor_start_up();
+
+	ret = akuio_pmem_init();
+	if(0 != ret)
+	{
+		dbg_printf("akuio_pmem_init \n");
+		return(-1);
+	}
+	
+	ret = video_stream_up();
+	if(0 != ret)
+	{
+		dbg_printf("video_stream_up fail ! \n");
+		return(-1);
+	}
+
+	sleep(1);
+	ret = record_start_up();
+	if(0 != ret)
+	{
+		dbg_printf("record_start_up fail ! \n");
+	}
+	
+	ret = msg_handle_start_up();
+	if(0 != ret)
+	{
+		dbg_printf("msg_handle_start_up is fail \n");
+		return(-1);
+	}
+	
+	ret = system_tencent_init(system_config_info);
+
+	if(ret != 0 )
+	{
+		dbg_printf("system_tencent_init is fail ! \n");
+	}
+	else
+	{
+		dbg_printf("system_tencent_init is succed ! \n");
+	}
+
+	video_record_video_start();
+
+
+	while(1)
+	{
+		sleep(10);
+	}
+
+	
+
+
+
+
+}
+
+
+#if 0
 int system_up(void)
 {
 
@@ -162,8 +223,17 @@ int system_up(void)
 	}
 	ret = video_stream_up();
 
+
+
+	
 	sleep(2);
 	record_start_up();
+	sleep(1);
+//	ret = replay_start_up();
+	if(0 != ret )
+	{
+
+	}
 	sleep(1);
 	video_record_video_start();
 
@@ -179,3 +249,7 @@ int system_up(void)
 
 
 }
+
+
+
+#endif

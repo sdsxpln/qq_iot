@@ -83,7 +83,12 @@ typedef struct  video_node_header
 
 
 
-
+typedef struct video_replay_info
+{
+	char * file_name;
+	unsigned int play_time;
+	unsigned long long base_time;
+}video_replay_info_t;
 
 
 
@@ -93,6 +98,8 @@ typedef struct  video_node_header
 
 #define  DEV_ONLINE			(11)
 #define  DEV_OFFLINE		(21)
+
+
 
 
 int  msg_push(void * data );

@@ -9,8 +9,10 @@
 #define	INDEX_FILE_OFFSET	(0)  
 #define DATA_FILE_OFFSET	(72000)
 
+
+void  record_fetch_history(unsigned int last_time, int max_count, int *count, void * range );
+int record_push_replay_data(unsigned int play_time, unsigned long long base_time);
 int record_push_record_data(void * data );
-void  fetch_history_video(unsigned int last_time, int max_count, int *count, void * range);
 int record_start_up(void);
 
 #endif /*_video_record_h*/

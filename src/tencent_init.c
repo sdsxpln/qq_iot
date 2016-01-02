@@ -191,13 +191,14 @@ static void qq_recv_audiodata(tx_audio_encode_param *param, unsigned char *pcEnc
 static void  qq_fetch_history_video(unsigned int last_time, int max_count, int *count, tx_history_video_range * range_list)
 {
 
-	last_time  +=  8*60*60;
-	dbg_printf("last_time==%ld  max_count==%ld \n",last_time,max_count);
 	struct tm *now;
 	now = localtime((time_t*)&last_time);
 	dbg_printf("%02d-%02d-%02d  %02d:%02d:%02d\n", now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
 
-	fetch_history_video(last_time,max_count,count,range_list);
+
+//	replay_fetch_history_video(last_time,max_count,count,range_list);
+	record_fetch_history(last_time,max_count,count,range_list);
+	dbg_printf("count====%d\n",*count);
 
 }
 
@@ -208,7 +209,7 @@ static  void qq_play_history_video(unsigned int play_time, unsigned long long ba
 	struct tm *now;
 	now = localtime((time_t*)&play_time);
 	dbg_printf("play_time_%02d-%02d-%02d  %02d:%02d:%02d\n", now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
-
+	record_push_replay_data(play_time,base_time);
 
 
 }

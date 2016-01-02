@@ -156,7 +156,8 @@ void sync_time_up(void)
 	
 	pthread_t sync_time_pthid;
 	pthread_create(&sync_time_pthid,NULL,sync_time,NULL);
-	pthread_detach(sync_time_pthid);
+	//pthread_detach(sync_time_pthid);
+	pthread_join(sync_time_pthid,NULL);
 
 
 }

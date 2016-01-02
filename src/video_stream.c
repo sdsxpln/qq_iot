@@ -26,20 +26,7 @@
 #define	 	ENCMEM_BUFF_SIZE	(256*1024)
 
 
-typedef enum
-{
-	I_FRAME = 0x00,
-	P_FRAME,
-	UNKNOW_FRAME
-}frame_type_m;
 
-
-typedef enum
-{	
-	SEND_VIDEO = (0x01<<1),
-	RECORD_VIDEO = (0x01 << 2),
-	UNKNOW_MODE,
-}video_mode_t;
 
 
 
