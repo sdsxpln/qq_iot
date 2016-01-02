@@ -455,6 +455,7 @@ int video_send_video_start(void)
 	if(NULL == handle)return(-1);
 
 	pthread_mutex_lock(&(handle->mutex_video_mode));
+	record_replay_send_stop();
 	handle->video_mode |= SEND_VIDEO;
 	video_capture_start();
 	pthread_mutex_unlock(&(handle->mutex_video_mode));

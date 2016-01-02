@@ -209,7 +209,17 @@ static  void qq_play_history_video(unsigned int play_time, unsigned long long ba
 	struct tm *now;
 	now = localtime((time_t*)&play_time);
 	dbg_printf("play_time_%02d-%02d-%02d  %02d:%02d:%02d\n", now->tm_year+1900, now->tm_mon+1, now->tm_mday,now->tm_hour+8, now->tm_min, now->tm_sec);
-	record_push_replay_data(play_time,base_time);
+	
+	if(0 == play_time)
+	{
+		record_replay_send_stop();
+		video_send_video_start();
+	}
+	else
+	{
+		record_push_replay_data(play_time,base_time);
+	}
+	
 
 
 }

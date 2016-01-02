@@ -579,6 +579,23 @@ static void * record_record_pthread(void * arg)
 }
 
 
+int record_replay_send_stop(void)
+{
+	record_video_handle * handle = (record_video_handle*)record_handle;
+	if(NULL == handle)
+	{
+		dbg_printf("the handle is null ! \n");
+		return (-1);
+	}
+	pthread_mutex_lock(&(handle->mutex_replay));
+	handle->need_change = 1;
+	pthread_mutex_unlock(&(handle->mutex_replay));
+	
+
+	return(0);
+
+
+}
 
 int record_push_replay_data(unsigned int play_time, unsigned long long base_time)
 {
@@ -698,7 +715,6 @@ static void * record_replay_pthread(void * arg)
 		fetch_and_sub(num, 1); 
 
 		if(ret != 0 || NULL == replay_video)continue;
-
 
 		ret = record_set_replay_offset((void * * )&handle->cur_file,replay_video->file_name,replay_video->play_time);
 		if(0 != ret || NULL == handle->cur_file)
