@@ -97,11 +97,6 @@ fail:
 
 
 
-/*
-用 pread 和 pwrite来处理录像回放的问题，还有writev和readv
-
-*/
-
 int system_up(void)
 {
 
@@ -121,6 +116,8 @@ int system_up(void)
 	
 	monitor_start_up();
 
+
+
 	ret = akuio_pmem_init();
 	if(0 != ret)
 	{
@@ -135,6 +132,13 @@ int system_up(void)
 		return(-1);
 	}
 
+	ret = msg_handle_start_up();
+	if(0 != ret)
+	{
+		dbg_printf("msg_handle_start_up is fail \n");
+		return(-1);
+	}
+
 	sleep(1);
 	ret = record_start_up();
 	if(0 != ret)
@@ -142,12 +146,7 @@ int system_up(void)
 		dbg_printf("record_start_up fail ! \n");
 	}
 	
-	ret = msg_handle_start_up();
-	if(0 != ret)
-	{
-		dbg_printf("msg_handle_start_up is fail \n");
-		return(-1);
-	}
+
 	
 	ret = system_tencent_init(system_config_info);
 

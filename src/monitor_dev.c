@@ -1,12 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h> 
+#include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>  
 #include <linux/netlink.h>
 #include <sys/mount.h>
 #include <sys/epoll.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <linux/types.h>
+#include <linux/rtnetlink.h>
 #include "monitor_dev.h"
+#include "msg_handle.h"
 #include "common.h"
 
 
@@ -16,8 +22,10 @@
 #define 	FILE_NAME 	"monitor_dev:"
 
 
-static volatile unsigned int mmc_status = 0;
 
+
+
+static volatile unsigned int mmc_status = 0;
 
 static int mmc_init_socket(void)  
 {  
@@ -50,7 +58,7 @@ static int mmc_init_socket(void)
 }
 
 
-static int mmc_process(int flag)
+int mmc_process(int flag)
 {
 	int ret = -1;	
 
@@ -93,33 +101,104 @@ int mmc_get_status(void)
 }
 
 
+
+static int eth_init_socket(void)
+{
+
+	int eth_fd = -1;
+	int ret = -1;
+	struct sockaddr_nl addr = {0};
+	eth_fd = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+	if(eth_fd < 0 )
+	{
+		dbg_printf("socket is fail !\n");
+		return(-1);
+	}
+    addr.nl_family = AF_NETLINK;
+    addr.nl_groups = RTMGRP_LINK;
+    addr.nl_pid = getpid();
+	ret = bind(eth_fd, (struct sockaddr *) &addr, sizeof(addr));
+	if(ret < 0)
+	{
+		close(eth_fd);
+		eth_fd = -1;
+	}
+
+	return(eth_fd);
+}
+
+
+static int eth_link_status(void)
+{
+	int status = -1;
+	int read_counts = 0;
+	char buff[2] = {0}; 
+	FILE * file = fopen("/sys/class/net/eth0/carrier","r");
+	if(NULL == file)
+	{
+		dbg_printf("open the file fail ! \n");
+		return(-1);
+	}
+	read_counts = fread(buff,1,2,file);
+	if(read_counts <= 0)
+	{
+		fclose(file);
+		file = NULL;
+		return(-1);
+	}
+	status = atoi(buff);
+	fclose(file);
+	file = NULL;
+
+	return(status);
+	
+
+}
+
 static void * monitor_fun(void * arg)
 {
 
 	int ret = -1;
 	int i = 0;
+	
 	int epfd = -1;
 	int mmc_fd = -1;
+	int eth_fd = -1;
+
+	int count_bytes = -1;
+	char buf[2048] = {0}; 
 	
-	umount(MMC_PATH);
-	mmc_process(1);
-	struct epoll_event ev;
-	struct epoll_event events[16];
-	epfd = epoll_create(16);
 	mmc_fd = mmc_init_socket();
 	if(mmc_fd < 0 )
 	{
 		dbg_printf("mmc_init_socket is fail ! \n");
-		return(NULL);
 	}
+
+	eth_fd = eth_init_socket();
+	if(eth_fd < 0)
+	{
+		dbg_printf("eth_init_socket is fail ! \n");
+	}
+
+
+	struct epoll_event ev;
+	struct epoll_event events[16];
+	epfd = epoll_create(16);
     ev.events = EPOLLIN;
-    ev.data.fd = mmc_fd;
-    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, mmc_fd, &ev);
-	if(ret < 0 )
-    {
-        dbg_printf("epoll_ctl is fail ! \n");
-        return (NULL);
-    }
+
+	if(mmc_fd > 0)
+	{
+	    ev.data.fd = mmc_fd;
+	    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, mmc_fd, &ev);
+	}
+
+	if(eth_fd > 0 )
+	{
+	    ev.data.fd = eth_fd;
+	    ret = epoll_ctl(epfd, EPOLL_CTL_ADD, eth_fd, &ev);	
+	
+	}
+	
 
 	while(1)
 	{
@@ -127,23 +206,56 @@ static void * monitor_fun(void * arg)
 		if(ret <= 0)continue;
 		for(i=0;i<ret;++i)
 		{
+			memset(buf,'\0',sizeof(buf));
 			if(mmc_fd == events[i].data.fd)
 			{
-				  char buf[2048] = {0}; 
-				  recv(mmc_fd, buf, sizeof(buf), 0); 
-				  if(NULL != strstr(buf,"remove") && NULL != strstr(buf,"mmc_host"))
-				  {	
-				  	
-					 mmc_process(0);
-				  }
-				  else if( NULL != strstr(buf,"add") && NULL != strstr(buf,"mmc_host"))
-				  {
-					 mmc_process(1);
-				  }
+				int flag = -1;
+				recv(mmc_fd, buf, sizeof(buf), 0); 
+				if(NULL != strstr(buf,"remove") && NULL != strstr(buf,"mmc_host")) {flag = 0;}
+				else if( NULL != strstr(buf,"add") && NULL != strstr(buf,"mmc_host")) { flag = 1; }
+
+				if(-1 == flag)continue;
+			  
+				msg_header_t * msg = calloc(1,sizeof(msg_header_t)+sizeof(monitor_mmc_t)+1);
+				if(NULL == msg)continue;
+				monitor_mmc_t * mmc_dev = (monitor_mmc_t*)(msg+1);
+				msg->cmd = MMC_MSG_CMD;
+				mmc_dev->status = flag;
+				ret = msg_push(msg);
+				if(0 != ret)
+				{
+					free(msg);
+					msg = NULL;
+				}
+				//dbg_printf("%s\n",buf);
 				  
-				  dbg_printf("%s\n",buf);
-				  memset(buf,'\0',sizeof(buf));	
 			}
+			else if(eth_fd == events[i].data.fd)
+			{
+				count_bytes = recv(eth_fd,buf, sizeof(buf), 0);
+				struct nlmsghdr *p = (struct nlmsghdr *) buf;
+				for (; count_bytes > 0; p = NLMSG_NEXT(p, count_bytes))
+				{
+		            if (!NLMSG_OK(p, count_bytes) || (size_t) count_bytes < sizeof(struct nlmsghdr) || (size_t) count_bytes < p->nlmsg_len)
+					{
+						dbg_printf("the packet is wrong ! \n");
+						break;
+		            }
+					if(p->nlmsg_type == RTM_NEWLINK || RTM_DELLINK == p->nlmsg_type)
+					{
+						int status = -1;
+						status = eth_link_status();
+						dbg_printf("status====%d\n",status);
+
+					}
+
+		
+		        }
+
+
+			}
+
+				
 		}
 		
 	}
@@ -154,11 +266,14 @@ static void * monitor_fun(void * arg)
 
 
 
-  
 
- 
+  
  int monitor_start_up(void)
  {
+
+ 	umount(MMC_PATH);
+	mmc_process(1);
+	
 	
 	pthread_t monitor_pthid;
 	pthread_create(&monitor_pthid,NULL,monitor_fun,NULL);

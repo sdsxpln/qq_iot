@@ -11,6 +11,7 @@
 #include "TXIPCAM.h"
 #include "TXAudioVideo.h"
 #include "video_stream.h"
+#include "monitor_dev.h"
 
 
 #undef  	DBG_ON
@@ -269,6 +270,14 @@ static void * msg_handle_pthread(void * arg)
 
 				msg_login_complete(packet+1);
 				break;
+			}
+
+			case MMC_MSG_CMD:
+			{
+				monitor_mmc_t * mmc_dev = (monitor_mmc_t*)(packet+1);
+				mmc_process(mmc_dev->status);
+				break;
+
 			}
 
 			default:

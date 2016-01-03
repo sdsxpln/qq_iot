@@ -12,10 +12,14 @@ typedef enum cmd_type
 	SET_BITRATE_CMD,
 	VIDEO_DATA_CMD,
 	VOICE_DATA_CMD,
+	MMC_MSG_CMD,
+	ETH_MSG_CMD,
+	KEY_MSG_CMD,
 	
 
 
 }cmd_type_t;
+
 
 
 
@@ -91,6 +95,17 @@ typedef struct video_replay_info
 }video_replay_info_t;
 
 
+
+typedef struct monitor_mmc
+{
+	char status;
+	
+}monitor_mmc_t;
+
+typedef struct monitor_eth
+{
+	char status;
+}monitor_eth_t;
 
 
 
