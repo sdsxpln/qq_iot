@@ -388,6 +388,48 @@ static int record_scan_files(void)
 }
 
 
+int record_reinit_handle(void)
+{
+	record_video_handle * handle = (record_video_handle*)record_handle;
+	if(NULL == handle)
+	{
+		dbg_printf("the handle has not be init! \n");
+		return(-1);
+	}
+
+	if(NULL != handle->record_file_name)
+	{
+
+		struct  record_file_node * record_node = calloc(1,sizeof(*record_node));
+		if(NULL == record_node)
+		{
+			dbg_printf("calloc is fail ! \n");
+			return(-1);
+		}
+		tx_history_video_range * new_range = &record_node->rang;
+		record_node->file_name = atol(handle->record_file_name);
+		new_range->start_time = record_node->file_name;
+		new_range->end_time = (unsigned int)time(NULL);
+		TAILQ_INSERT_HEAD(&handle->record_file_queue,record_node,links);
+		free(handle->record_file_name);
+		handle->record_file_name = NULL;
+	}
+	
+	handle->iframe_counts = 0;
+	if(NULL != handle->data_fd)
+	{
+		fclose(handle->data_fd);
+		handle->data_fd = NULL;
+	}
+	if(NULL != handle->index_fd)
+	{
+		fclose(handle->index_fd);
+		handle->index_fd = NULL;
+	}
+	return(0);
+
+}
+
 
 int  record_process_data(video_data_t * data)
 {

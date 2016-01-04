@@ -275,6 +275,15 @@ static void * msg_handle_pthread(void * arg)
 			case MMC_MSG_CMD:
 			{
 				monitor_mmc_t * mmc_dev = (monitor_mmc_t*)(packet+1);
+				if(0 == mmc_dev->status)
+				{
+					video_record_video_stop();
+					record_reinit_handle();
+				}
+				else if(1 == mmc_dev->status)
+				{
+					video_record_video_start();
+				}
 				mmc_process(mmc_dev->status);
 				break;
 

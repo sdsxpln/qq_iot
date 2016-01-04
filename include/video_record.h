@@ -15,5 +15,6 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 int record_replay_send_stop(void);
 int record_push_record_data(void * data );
 int record_start_up(void);
+int record_reinit_handle(void);
 
 #endif /*_video_record_h*/
