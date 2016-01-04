@@ -10,6 +10,7 @@
 #include "TXIPCAM.h"
 #include "video_stream.h"
 #include "monitor_dev.h"
+#include "fs_managed.h"
 
 
 #undef  	DBG_ON
@@ -113,7 +114,8 @@ int system_up(void)
 		dbg_printf("calloc is fail ! \n");
 		return(-1);
 	}
-	
+
+	fs_managed_start_up();
 	monitor_start_up();
 
 

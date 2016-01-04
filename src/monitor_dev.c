@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <linux/types.h>
 #include <linux/rtnetlink.h>
+#include <sys/statfs.h>
 #include "monitor_dev.h"
 #include "msg_handle.h"
 #include "common.h"
@@ -98,6 +99,22 @@ int mmc_process(int flag)
 int mmc_get_status(void)
 {
 	return(mmc_status);
+}
+
+unsigned long mmc_get_free(char * path)/*MB*/
+{
+	int ret = -1;
+	if(0 == mmc_status || NULL == path)return(0);
+	struct statfs mmc_fs;
+	memset(&mmc_fs,0,sizeof(mmc_fs));
+	ret = statfs(path,&mmc_fs);
+	if(0 != ret)
+	{
+		dbg_printf("statfs is fail ! \n");
+		return(0);
+	}
+	
+	return((mmc_fs.f_bavail*mmc_fs.f_bsize)/(1024*1024));
 }
 
 

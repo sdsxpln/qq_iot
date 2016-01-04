@@ -5,6 +5,7 @@
 #define	 RECORD_MAGINC	"record"
 #define  RECORD_PATH	"/mnt/record"
 
+#define	RECORD_FREE_SIZE	(600)   /*Mb*/
 #define IFRAME_COUNTS_MAX	(3600)
 #define	INDEX_FILE_OFFSET	(0)  
 #define DATA_FILE_OFFSET	(72000)
@@ -16,5 +17,6 @@ int record_replay_send_stop(void);
 int record_push_record_data(void * data );
 int record_start_up(void);
 int record_reinit_handle(void);
+int record_manage_files(void);
 
 #endif /*_video_record_h*/

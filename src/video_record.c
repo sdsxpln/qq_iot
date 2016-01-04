@@ -15,6 +15,7 @@
 #include "monitor_dev.h"
 #include "video_record.h"
 #include "video_stream.h"
+#include "fs_managed.h"
 
 
 #undef  	DBG_ON
@@ -26,11 +27,12 @@
 struct  record_file_node 
 {
 	unsigned long  file_name;
+	unsigned long file_size;
     tx_history_video_range rang;
     TAILQ_ENTRY(record_file_node) links;  
 };
 
-/*http://www.tuicool.com/articles/uIFJRj  查询的用法*/
+
 
 typedef struct record_video_handle
 {
@@ -58,13 +60,50 @@ typedef struct record_video_handle
 	FILE * cur_file;
 
 
-}record_video_handle;
+}record_video_handle_t;
 
 
-static  record_video_handle * record_handle = NULL;
+static  record_video_handle_t * record_handle = NULL;
 
 
+static int is_digital(const char * file_name)
+{
+	int i = 0;
+	int ret = 1;
+	if(NULL == file_name)return (ret);
+	for(i=0;i<strlen(file_name);++i)
+	{
+        if( file_name[i] >= '0' && file_name[i] <='9')
+        {
+			continue;
+		}   
+		else
+		{
+			ret = 0;
+			break;
+		}
+	}
+	
+	return(ret);
+}
 
+
+static unsigned long record_get_file_size(const char * file_path)
+{
+
+	int ret = -1;
+	if(NULL == file_path)
+	{
+		dbg_printf("the path is null,please check it ! \n");
+		return(0);
+	}
+	struct stat file_stat;
+	memset(&file_stat,0,sizeof(struct stat));
+	ret = stat(file_path, &file_stat);
+	if(ret < 0 )return(0);
+	return(file_stat.st_size);
+	
+}
 
 static char * record_new_file(void)
 {
@@ -75,6 +114,8 @@ static char * record_new_file(void)
 		dbg_printf("the mmc is out ! \n");
 		return(NULL);
 	}
+
+	
 	unsigned int time_value = (unsigned int)time(NULL);
 	char * new_file_name = calloc(1,sizeof(char)*32);
 	if(NULL == new_file_name)
@@ -117,6 +158,7 @@ static char * record_new_file(void)
 		close(fd);
 		fd = -1;
 	}
+	fs_hangle_file(FILE_RECORD,FILE_NEW,NULL);
 
 	return(new_file_name);
 	
@@ -134,33 +176,9 @@ fail:
 
 
 
-static int is_digital(const char * file_name)
-{
-	int i = 0;
-	int ret = 1;
-	if(NULL == file_name)return (ret);
-	for(i=0;i<strlen(file_name);++i)
-	{
-        if( file_name[i] >= '0' && file_name[i] <='9')
-        {
-			continue;
-		}   
-		else
-		{
-			ret = 0;
-			break;
-		}
-	}
-	
-	return(ret);
-}
-
-
-
-
 void  record_fetch_history(unsigned int last_time, int max_count, int *count, void * range )
 {
-	record_video_handle * handle = record_handle;
+	record_video_handle_t * handle = record_handle;
 	unsigned int last_time_zone = last_time + 8*3600;
 	int count_video = 0;
 	tx_history_video_range * range_list = (tx_history_video_range * )range;
@@ -203,6 +221,7 @@ static void * record_get_file_info(const char * file_name)
 	memset(buff,'\0',64);
 	snprintf(buff,64,"%s%s",RECORD_PATH,"/");
 	strcat(buff,file_name);
+
 	
 	precord = fopen(buff, "r");
 	if(NULL == precord)
@@ -222,11 +241,11 @@ static void * record_get_file_info(const char * file_name)
 	iframe = (video_iframe_index_t*)index_buff;
 	if(0 != strcmp(iframe->magic,RECORD_MAGINC))
 	{
-		dbg_printf("this is not a right file ! \n");
+		dbg_printf("this is not a right file ! \n"); 
+		fs_hangle_file(FILE_RECORD,FILE_DEL,buff);
 		goto fail;
 	}
 
-//	time_begin = iframe->time_stamp/1000UL;
 	time_begin = iframe->time_stamp;
 
 	pre_iframe = iframe;
@@ -237,8 +256,6 @@ static void * record_get_file_info(const char * file_name)
 		iframe += 1;
 	}
 
-
-//	time_end = pre_iframe->time_stamp/1000UL;
 	time_end = pre_iframe->time_stamp;
 
 	struct  record_file_node  * record_node = calloc(1,sizeof(struct  record_file_node));
@@ -250,6 +267,9 @@ static void * record_get_file_info(const char * file_name)
 	
 	tx_history_video_range * new_range = &record_node->rang;
 
+	
+
+	record_node->file_size = record_get_file_size(buff);
 	record_node->file_name = atol(file_name);
 	new_range->start_time = time_begin;
 	new_range->end_time = time_end;
@@ -390,13 +410,16 @@ static int record_scan_files(void)
 
 int record_reinit_handle(void)
 {
-	record_video_handle * handle = (record_video_handle*)record_handle;
+
+	
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle)
 	{
 		dbg_printf("the handle has not be init! \n");
 		return(-1);
 	}
 
+	char buff[64] = {0};
 	if(NULL != handle->record_file_name)
 	{
 
@@ -406,6 +429,11 @@ int record_reinit_handle(void)
 			dbg_printf("calloc is fail ! \n");
 			return(-1);
 		}
+
+		memset(buff,'\0',64);
+		snprintf(buff,64,"%s%s",RECORD_PATH,"/");
+		strcat(buff,handle->record_file_name);
+		record_node->file_size = record_get_file_size(buff);
 		tx_history_video_range * new_range = &record_node->rang;
 		record_node->file_name = atol(handle->record_file_name);
 		new_range->start_time = record_node->file_name;
@@ -440,7 +468,7 @@ int  record_process_data(video_data_t * data)
 	}
 	char buff[64] = {0};
 	
-	record_video_handle * handle = (record_video_handle*)record_handle;
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle)
 	{
 		dbg_printf("handle is not init ! \n");
@@ -457,6 +485,11 @@ int  record_process_data(video_data_t * data)
 				dbg_printf("calloc is fail ! \n");
 				return(-1);
 			}
+
+			memset(buff,'\0',64);
+			snprintf(buff,64,"%s%s",RECORD_PATH,"/");
+			strcat(buff,handle->record_file_name);
+			record_node->file_size = record_get_file_size(buff);
 			tx_history_video_range * new_range = &record_node->rang;
 			record_node->file_name = atol(handle->record_file_name);
 			new_range->start_time = record_node->file_name;
@@ -542,7 +575,7 @@ int record_push_record_data(void * data )
 	int i = 0;
 	if(0 == mmc_get_status())return(-1);
 
-	record_video_handle * handle = (record_video_handle*)record_handle;
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle || NULL== data)
 	{
 		dbg_printf("check the param ! \n");
@@ -588,7 +621,7 @@ static void * record_record_pthread(void * arg)
 		return(NULL);
 	}
 	
-	record_video_handle * handle = (record_video_handle*)arg;
+	record_video_handle_t * handle = (record_video_handle_t*)arg;
 	int ret = -1;
 	int is_run = 1;
 	video_data_t *	video = NULL;
@@ -623,7 +656,7 @@ static void * record_record_pthread(void * arg)
 
 int record_replay_send_stop(void)
 {
-	record_video_handle * handle = (record_video_handle*)record_handle;
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle)
 	{
 		dbg_printf("the handle is null ! \n");
@@ -645,7 +678,7 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 	int ret = 1;
 	int i = 0;
 	video_replay_info_t * data = NULL;
-	record_video_handle * handle = (record_video_handle*)record_handle;
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle)
 	{
 		dbg_printf("check the param ! \n");
@@ -726,7 +759,7 @@ static void * record_replay_pthread(void * arg)
 		return(NULL);
 	}
 	
-	record_video_handle * handle = (record_video_handle*)arg;
+	record_video_handle_t * handle = (record_video_handle_t*)arg;
 	int ret = -1;
 	int is_run = 1;
 
@@ -849,6 +882,73 @@ clean:
 	return(NULL);
 
 }
+
+
+
+int record_manage_files(void)
+{
+
+
+	unsigned long free_size = 0;
+	char buff[128] = {0};
+	struct  record_file_node * node  = NULL;
+	record_video_handle_t * handle = record_handle;
+	if(NULL == handle)
+	{
+		dbg_printf("handle is null ! \n");
+		return(-1);
+	}
+	if(0 == mmc_get_status())
+	{
+		dbg_printf("the mmc is out ! \n");
+		return(-1);
+	}
+
+	free_size = mmc_get_free(RECORD_PATH);
+	if(free_size <= 0)
+	{
+		dbg_printf("mmc_get_free is fail ! \n");
+		return(-1);
+	}
+
+	dbg_printf("free_size===%d\n",free_size);
+	while(free_size < RECORD_FREE_SIZE)
+	{
+		pthread_mutex_lock(&handle->record_file_mutex);
+		node = TAILQ_LAST(&handle->record_file_queue,record_queue);
+		if(NULL != node)
+		{
+			TAILQ_REMOVE(&handle->record_file_queue,node,links);
+		}
+		pthread_mutex_unlock(&handle->record_file_mutex);
+
+		if(NULL != node)
+		{
+			free_size += node->file_size/(1024*1024);
+			memset(buff,'\0',128);
+			snprintf(buff,128,"rm -rf %s%s%d",RECORD_PATH,"/",node->file_name);
+			system(buff);
+			free(node);
+			node = NULL;
+			dbg_printf("the del file name is %s \n",buff);
+		}
+		else
+		{
+			if(free_size < RECORD_FREE_SIZE)
+			{
+				video_record_video_stop();
+				record_reinit_handle();
+			}
+			break;
+		}
+
+	}
+	
+	return(0);
+}
+
+
+
 
 int record_start_up(void)
 {

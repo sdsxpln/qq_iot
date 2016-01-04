@@ -28,6 +28,7 @@ LOCAL_DEV_SRC := \
 		$(LOCAL_SRC)/dev_camera.c  \
 		$(LOCAL_SRC)/video_stream.c  \
 		$(LOCAL_SRC)/video_record.c  \
+		$(LOCAL_SRC)/fs_managed.c  \
 		$(LOCAL_SRC)/system_up.c  \
 		$(LOCAL_SRC)/main.c	
 
