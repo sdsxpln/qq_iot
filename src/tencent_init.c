@@ -8,7 +8,7 @@
 
 #include "tencent_init.h"
 #include "common.h"
-
+#include "voice_handle.h"   /*del*/
 #include "msg_handle.h"
 
 
@@ -167,6 +167,7 @@ static bool qq_start_mic()
 {
 
 	dbg_printf("qq_start_mic\n");
+	voice_capture_mic_start();
 	return(true);
 }
 
@@ -176,6 +177,7 @@ static bool qq_stop_mic()
 {
 
 	dbg_printf("qq_stop_mic\n");
+	voice_capture_mic_stop();
 	return(true);
 }
 

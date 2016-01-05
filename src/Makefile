@@ -9,8 +9,8 @@ CC = arm-none-linux-gnueabi-gcc
 
 LOCAL_INC =  -I./  -I../include  -L../lib
 
-LOCAL_STATIC_LIB = ./libispsdk.a
-LOCAL_SHARE_LIB =    -lpthread  -lakuio  -lakstreamenclib  -ltxdevicesdk -lrt  
+LOCAL_STATIC_LIB = ./libispsdk.a  ./libpcm.a
+LOCAL_SHARE_LIB =    -lpthread  -lakuio  -lakstreamenclib  -ltxdevicesdk -lrt  -lakaudiofilter  -lakaudiocodec
 LOCAL_SRC =  .
 
 
@@ -28,6 +28,11 @@ LOCAL_DEV_SRC := \
 		$(LOCAL_SRC)/dev_camera.c  \
 		$(LOCAL_SRC)/video_stream.c  \
 		$(LOCAL_SRC)/video_record.c  \
+		$(LOCAL_SRC)/pcm_dev.c  \
+		$(LOCAL_SRC)/amr_loadlib.c  \
+		$(LOCAL_SRC)/amr_decode.c  \
+		$(LOCAL_SRC)/amr_encode.c  \
+		$(LOCAL_SRC)/voice_handle.c  \
 		$(LOCAL_SRC)/fs_managed.c  \
 		$(LOCAL_SRC)/system_up.c  \
 		$(LOCAL_SRC)/main.c	

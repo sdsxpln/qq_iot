@@ -9,8 +9,10 @@
 #include "msg_handle.h"
 #include "TXIPCAM.h"
 #include "video_stream.h"
+#include "voice_handle.h"
 #include "monitor_dev.h"
 #include "fs_managed.h"
+
 
 
 #undef  	DBG_ON
@@ -161,9 +163,10 @@ int system_up(void)
 		dbg_printf("system_tencent_init is succed ! \n");
 	}
 
+	voice_system_start_up();
+
+
 	video_record_video_start();
-
-
 	while(1)
 	{
 		sleep(10);
