@@ -19,44 +19,14 @@
 
 
 
-
-typedef  enum
-{
-	PCM_FILE,
-	PCM_DATA,
-	AMR_FILE,
-	AMR_DATA,
-	MP3_FILE,
-	MP3_DATA,
-	
-}voice_type_m;
-
+#define  PCM_RAW_BUFF_NUM	(100)
 
 typedef struct pcm_node
 {
+	unsigned int status;
 	unsigned int length;
 	char pcm_data[ENCODE_PCM_SIZE];
 }pcm_node_t;
-
-
-
-
-typedef  struct voice_node_head
-{
-	voice_type_m type;	
-	unsigned int sample_rate;
-	unsigned int data_length;
-}voice_node_head_t;
-
-
-
-typedef  union voice_node_data
-{
-	char file_name[128];
-	char data_buff[128];
-
-}voice_node_data_t;
-
 
 
 
@@ -84,6 +54,8 @@ typedef struct voice_system
 	tx_audio_encode_param encode_param;
 	void * pamr_decode_handle;
 	void * pamr_encode_handle;
+
+	pcm_node_t *pcm_raw_buff;
 	
 
 }voice_system_t;
@@ -174,6 +146,30 @@ static int voice_push_mic_data(void * data )
 
 
 
+static void * voice_get_free_rawbuff(void)
+{
+	int i = 0;
+	voice_system_t * factory = (voice_system_t * )voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("please init the handle !\n");
+		return(NULL);
+	}
+	pcm_node_t * node = factory->pcm_raw_buff;
+	if(NULL == node)
+	{
+		dbg_printf("check the buff!\n");
+		return(NULL);
+	}
+	for(i=0;i<PCM_RAW_BUFF_NUM;++i)
+	{
+		if(0 == node->status)return(node);
+		node+= 1;
+	}
+	return(NULL);
+}
+
+
 static void *  voice_mic_capture_pthread(void * arg)
 {
 	voice_system_t * factory = (voice_system_t * )arg;
@@ -182,9 +178,8 @@ static void *  voice_mic_capture_pthread(void * arg)
 		dbg_printf("please check the param ! \n");
 		return(NULL);
 	}
-	void * encode_handle = factory->pamr_encode_handle;
 	void * ad_handle = factory->ad_handle;
-	if(NULL==encode_handle || NULL==ad_handle)
+	if(NULL==ad_handle)
 	{
 		dbg_printf("please check the param !\n");
 		return(NULL);
@@ -194,15 +189,11 @@ static void *  voice_mic_capture_pthread(void * arg)
 	int is_run = 1;
 	int read_length = 0;
 	int enc_length = 0;
-
 	unsigned long nTimeStamp=0;
-	char pcm_buff[ENCODE_PCM_SIZE] = {0};
-   // pcm_set_ad_agc_enable(1);/*!*/
+
+    pcm_set_ad_agc_enable(1);/*!*/
     pcm_ad_filter_enable(ad_handle, 1);
 	pcm_set_mic_vol(ad_handle,5);
-
-	char enc_out_buff[640];
-		
 	while(is_run)
 	{
         pthread_mutex_lock(&(factory->mutex_mic));
@@ -212,17 +203,12 @@ static void *  voice_mic_capture_pthread(void * arg)
         }
 		pthread_mutex_unlock(&(factory->mutex_mic));
 
-		#if 0
-		read_length = pcm_read_ad(ad_handle,pcm_buff,ENCODE_PCM_SIZE,(unsigned long *)&nTimeStamp);
-		if(read_length <= 0 )continue;
-		enc_length=amr_encode(encode_handle,pcm_buff,read_length,enc_out_buff,640);
-		dbg_printf("enc_length===%d\n",enc_length);
-		tx_set_audio_data(&factory->encode_param,enc_out_buff,enc_length);
-		#else
-		pcm_node_t * node = calloc(1,sizeof(pcm_node_t));
+	
+		pcm_node_t * node = (pcm_node_t*)voice_get_free_rawbuff();
 		if(NULL == node)
 		{
 			sleep(1);
+			dbg_printf("do not find the node !\n");
 			continue;
 		}
 		node->length= pcm_read_ad(ad_handle,node->pcm_data,ENCODE_PCM_SIZE,(unsigned long *)&nTimeStamp);
@@ -232,7 +218,6 @@ static void *  voice_mic_capture_pthread(void * arg)
 			node = NULL;
 			continue;
 		}
-
 		ret = voice_push_mic_data(node);
 		if(ret != 0)
 		{
@@ -242,12 +227,6 @@ static void *  voice_mic_capture_pthread(void * arg)
 
 		}
 
-		
-		
-
-		
-
-		#endif
 	}
 
 	return(NULL);
@@ -268,6 +247,12 @@ static void *  voice_mic_process_pthread(void * arg)
 	int enc_length = 0;
 	pcm_node_t * read_node = NULL;
 	void * encode_handle = factory->pamr_encode_handle;
+	if(NULL == encode_handle)
+	{
+		dbg_printf("encode_handle is null \n");
+		return(NULL);
+	}
+
 	char enc_out_buff[ENCODE_AMR_SIZE];
 	while(is_run)
 	{
@@ -283,14 +268,12 @@ static void *  voice_mic_process_pthread(void * arg)
 		fetch_and_sub(handle_num, 1);  
 		if(ret != 0 || NULL == read_node)continue;
 
-	
-		enc_length=amr_encode(encode_handle,read_node->pcm_data,read_node->length,enc_out_buff,640);
-		dbg_printf("enc_length===%d\n",enc_length);
+		enc_length=amr_encode(encode_handle,read_node->pcm_data,read_node->length,enc_out_buff,ENCODE_AMR_SIZE);
 		tx_set_audio_data(&factory->encode_param,enc_out_buff,enc_length);
+		read_node->status = 0;
+		
 
-
-		free(read_node);
-		read_node = NULL;
+		
 
 	}
 
@@ -362,6 +345,8 @@ int voice_system_start_up(void)
     voice_handle->encode_param.encode_param = 7; 
     voice_handle->encode_param.frame_per_pkg = FRAME_NUM_PER_PACKET;
     voice_handle->encode_param.sampling_info = GET_SIMPLING_INFO(1, 8000, 16);
+
+	voice_handle->pcm_raw_buff = calloc(1,sizeof(pcm_node_t)*PCM_RAW_BUFF_NUM);
 
 	pthread_t mic_capture_pthred;
 	pthread_create(&mic_capture_pthred, NULL, voice_mic_capture_pthread, voice_handle);

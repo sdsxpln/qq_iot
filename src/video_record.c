@@ -59,8 +59,11 @@ typedef struct record_video_handle
 	volatile unsigned int need_change;
 	FILE * cur_file;
 
+	struct  record_file_node cur_file_node;
+
 
 }record_video_handle_t;
+
 
 
 static  record_video_handle_t * record_handle = NULL;
@@ -203,8 +206,12 @@ void  record_fetch_history(unsigned int last_time, int max_count, int *count, vo
 		}
     }
 	pthread_mutex_unlock(&handle->record_file_mutex);
-	
-	*count  = count_video;
+
+	tx_history_video_range * cur_range = &handle->cur_file_node.rang;
+	range_list[count_video].start_time = cur_range->start_time - 8*3600;
+	range_list[count_video].end_time = cur_range->end_time - 8*3600;
+			
+	*count  = count_video+1;
 	return;
 	
 
@@ -348,6 +355,7 @@ static int  record_set_replay_offset(void * * file,const char * file_name,unsign
 	}
 	if(0 == is_find)
 	{
+		dbg_printf("not find it !\n");
 		fclose(*(FILE * *)file);
 		* file = NULL;
 		return(-1);
@@ -474,6 +482,7 @@ int  record_process_data(video_data_t * data)
 		dbg_printf("handle is not init ! \n");
 		return(-1);
 	}
+	tx_history_video_range * range = &handle->cur_file_node.rang;
 	if(NULL == handle->record_file_name || handle->iframe_counts >= IFRAME_COUNTS_MAX)
 	{
 		if(NULL != handle->record_file_name)
@@ -496,7 +505,7 @@ int  record_process_data(video_data_t * data)
 			new_range->end_time = (unsigned int)time(NULL);
 			TAILQ_INSERT_HEAD(&handle->record_file_queue,record_node,links);
 	
-			
+
 			free(handle->record_file_name);
 			handle->record_file_name = NULL;
 		}
@@ -504,6 +513,8 @@ int  record_process_data(video_data_t * data)
 		if(NULL == handle->record_file_name)return(-1);
 		handle->iframe_counts = 0;
 
+		handle->cur_file_node.file_name = atol(handle->record_file_name);
+		range->start_time = handle->cur_file_node.file_name;
 
 		if(NULL != handle->data_fd)
 		{
@@ -544,14 +555,17 @@ int  record_process_data(video_data_t * data)
 	{
 		video_iframe_index_t index;
 		memset(&index,'\0',sizeof(index));
-		//fflush(handle->index_fd);
-		//fflush(handle->data_fd);
+		fflush(handle->index_fd);
+		fflush(handle->data_fd);
 		index.offset = ftell(handle->data_fd);
 		//index.time_stamp = data->nTimeStamps;
+		
 		index.time_stamp = (unsigned int)time(NULL);
 		memmove(index.magic,RECORD_MAGINC,strlen(RECORD_MAGINC));
 		fwrite((void*)&index,1,sizeof(index),handle->index_fd);
 		handle->iframe_counts += 1;
+
+		range->end_time = index.time_stamp;
 	}
 
 	
@@ -677,6 +691,7 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 
 	int ret = 1;
 	int i = 0;
+	
 	video_replay_info_t * data = NULL;
 	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
 	if(NULL == handle)
@@ -690,33 +705,57 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 	
 	play_time += 8*3600;
 	dbg_printf("play_time====%ld\n",play_time);
-	pthread_mutex_lock(&handle->record_file_mutex);
-    TAILQ_FOREACH(record_node,&handle->record_file_queue,links)
-    {
-    	range = (tx_history_video_range *)&record_node->rang;
 
-		dbg_printf("start_time====%ld\n",range->start_time);
-		dbg_printf("end_time====%ld\n",range->end_time);
-		if(range->start_time <= play_time && range->end_time >= play_time)
+	tx_history_video_range * cur_range = &handle->cur_file_node.rang;
+	if(NULL  != cur_range)
+	{
+		if(cur_range->start_time <= play_time && cur_range->end_time >= play_time)
 		{
 			 data = calloc(1,sizeof(*data));
-			 if(NULL == data )break;
-			 asprintf(&data->file_name,"%d",record_node->file_name);
+			 if(NULL == data )
+			 {
+				dbg_printf("calloc is fail!\n");
+				return(-1);
+			 }
+			 asprintf(&data->file_name,"%d",handle->cur_file_node.file_name);
 			
 			 data->base_time = base_time;
 			 data->play_time = play_time;
-			 break;
 		}
-    }
-	pthread_mutex_unlock(&handle->record_file_mutex);
-	
-	
+	}
+
+	if(NULL == data)
+	{
+		pthread_mutex_lock(&handle->record_file_mutex);
+	    TAILQ_FOREACH(record_node,&handle->record_file_queue,links)
+	    {
+	    	range = (tx_history_video_range *)&record_node->rang;
+
+			dbg_printf("start_time====%ld\n",range->start_time);
+			dbg_printf("end_time====%ld\n",range->end_time);
+			if(range->start_time <= play_time && range->end_time >= play_time)
+			{
+				 data = calloc(1,sizeof(*data));
+				 if(NULL == data )break;
+				 asprintf(&data->file_name,"%d",record_node->file_name);
+				
+				 data->base_time = base_time;
+				 data->play_time = play_time;
+				 break;
+			}
+	    }
+		pthread_mutex_unlock(&handle->record_file_mutex);
+
+	}
+
+
 	if(NULL == data)
 	{
 		dbg_printf("not find  dest file ! \n");
 		return(-1);
-
 	}
+
+
 	pthread_mutex_lock(&(handle->mutex_replay));
 
 	for (i = 0; i < 1000; i++)
@@ -999,6 +1038,7 @@ int record_start_up(void)
 	
 
 	record_scan_files();
+	memset(&record_handle->cur_file_node,0,sizeof(struct  record_file_node));
 	
 	pthread_t record_pthid;
 	ret = pthread_create(&record_pthid,NULL,record_record_pthread,record_handle);
