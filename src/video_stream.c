@@ -190,7 +190,7 @@ static  void * video_new_encode(unsigned int bps)
 	
 	open_input.encH264Par.rotation = ENC_ROTATE_0;		
 	open_input.encH264Par.frameRateDenom = 1;
-	open_input.encH264Par.frameRateNum = 15;	
+	open_input.encH264Par.frameRateNum = 20;	
 	
 	open_input.encH264Par.qpHdr = -1;		
   	open_input.encH264Par.streamType = 0;	
@@ -371,6 +371,7 @@ static int  video_fill_record_data(unsigned char *pcEncData, int nEncDataLen,int
 		{
 			flag =1;
 			video->status = 1;
+			video->type = RECORD_VIDEO_DATA;
 			video->nFrameType = nFrameType;
 			video->nTimeStamps = nTimeStamps;
 			video->nGopIndex = nGopIndex;
@@ -476,6 +477,7 @@ int video_send_video_stop(void)
 	{
 		video_capture_stop();	
 	}
+	record_replay_send_stop();
 	pthread_mutex_unlock(&(handle->mutex_video_mode));
 
 	

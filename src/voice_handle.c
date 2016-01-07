@@ -10,6 +10,9 @@
 #include "amr_encode.h"
 #include "amr_decode.h"
 #include "TXAudioVideo.h"
+#include "msg_handle.h"
+#include "video_record.h"
+
 
 
 #undef  	DBG_ON
@@ -25,9 +28,16 @@ typedef struct pcm_node
 {
 	unsigned int status;
 	unsigned int length;
+	unsigned long time_sample;
 	char pcm_data[ENCODE_PCM_SIZE];
 }pcm_node_t;
 
+
+typedef enum
+{
+	VOICE_SEND = (0x01<<1),
+	VOICE_RECORD = (0x01<<2),
+}voice_mode_m;
 
 
 typedef struct voice_system
@@ -56,6 +66,7 @@ typedef struct voice_system
 	void * pamr_encode_handle;
 
 	pcm_node_t *pcm_raw_buff;
+	int voice_mode;
 	
 
 }voice_system_t;
@@ -66,7 +77,7 @@ static voice_system_t * voice_handle  = NULL;
 
 
 
-int voice_capture_mic_start(void)
+static int voice_capture_mic_start(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -83,7 +94,7 @@ int voice_capture_mic_start(void)
 
 
 
-int voice_capture_mic_stop(void)
+static int voice_capture_mic_stop(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -100,13 +111,129 @@ int voice_capture_mic_stop(void)
 
 
 
+int voice_send_start(void)
+{
+
+	voice_system_t * factory = (voice_system_t*)voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+	pthread_mutex_lock(&(factory->mutex_mic));
+	factory->voice_mode |= VOICE_SEND;
+	voice_capture_mic_start();
+	pthread_mutex_unlock(&(factory->mutex_mic));
+
+
+	return(0);
+}
+
+
+int voice_send_stop(void)
+{
+
+	voice_system_t * factory = (voice_system_t*)voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+	pthread_mutex_lock(&(factory->mutex_mic));
+	factory->voice_mode &= ~VOICE_SEND;
+	if(0 == factory->voice_mode&VOICE_RECORD)
+	{
+		voice_capture_mic_stop();
+	}
+	pthread_mutex_unlock(&(factory->mutex_mic));
+	
+	return(0);
+}
+
+
+int voice_record_start(void)
+{
+
+	voice_system_t * factory = (voice_system_t*)voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+	pthread_mutex_lock(&(factory->mutex_mic));
+	factory->voice_mode |= VOICE_RECORD;
+	voice_capture_mic_start();
+	pthread_mutex_unlock(&(factory->mutex_mic));
+	return(0);
+}
+
+
+
+int voice_record_stop(void)
+{
+
+
+	voice_system_t * factory = (voice_system_t*)voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+	pthread_mutex_lock(&(factory->mutex_mic));
+	factory->voice_mode &= ~VOICE_RECORD;
+	if(0 == factory->voice_mode&VOICE_SEND)
+	{
+		voice_capture_mic_stop();
+	}
+	pthread_mutex_unlock(&(factory->mutex_mic));
+	return(0);
+}
+
+
+int voice_net_send(unsigned char *enc_data, int data_len)
+{
+
+	voice_system_t * factory = (voice_system_t * )voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("please init the handle !\n");
+		return(-1);
+	}
+	tx_set_audio_data(&factory->encode_param,enc_data,data_len);
+	
+	return(0);
+}
+static void * voice_get_free_rawbuff(void)
+{
+	int i = 0;
+	voice_system_t * factory = (voice_system_t * )voice_handle;
+	if(NULL == factory)
+	{
+		dbg_printf("please init the handle !\n");
+		return(NULL);
+	}
+	pcm_node_t * node = factory->pcm_raw_buff;
+	if(NULL == node)
+	{
+		dbg_printf("check the buff!\n");
+		return(NULL);
+	}
+	for(i=0;i<PCM_RAW_BUFF_NUM;++i)
+	{
+		if(0 == node->status)return(node);
+		node+= 1;
+	}
+	return(NULL);
+}
+
+
+
 static int voice_push_mic_data(void * data )
 {
 
 	int ret = 1;
 	int i = 0;
 
-	
 	voice_system_t * handle = (voice_system_t*)voice_handle;
 	if(NULL == handle || NULL== data)
 	{
@@ -145,29 +272,6 @@ static int voice_push_mic_data(void * data )
 }
 
 
-
-static void * voice_get_free_rawbuff(void)
-{
-	int i = 0;
-	voice_system_t * factory = (voice_system_t * )voice_handle;
-	if(NULL == factory)
-	{
-		dbg_printf("please init the handle !\n");
-		return(NULL);
-	}
-	pcm_node_t * node = factory->pcm_raw_buff;
-	if(NULL == node)
-	{
-		dbg_printf("check the buff!\n");
-		return(NULL);
-	}
-	for(i=0;i<PCM_RAW_BUFF_NUM;++i)
-	{
-		if(0 == node->status)return(node);
-		node+= 1;
-	}
-	return(NULL);
-}
 
 
 static void *  voice_mic_capture_pthread(void * arg)
@@ -211,13 +315,15 @@ static void *  voice_mic_capture_pthread(void * arg)
 			dbg_printf("do not find the node !\n");
 			continue;
 		}
-		node->length= pcm_read_ad(ad_handle,node->pcm_data,ENCODE_PCM_SIZE,(unsigned long *)&nTimeStamp);
+		node->length= pcm_read_ad(ad_handle,node->pcm_data,ENCODE_PCM_SIZE,(unsigned long *)&node->time_sample);
 		if(node->length <= 0 )
 		{
 			free(node);
 			node = NULL;
 			continue;
 		}
+
+		
 		ret = voice_push_mic_data(node);
 		if(ret != 0)
 		{
@@ -269,17 +375,41 @@ static void *  voice_mic_process_pthread(void * arg)
 		if(ret != 0 || NULL == read_node)continue;
 
 		enc_length=amr_encode(encode_handle,read_node->pcm_data,read_node->length,enc_out_buff,ENCODE_AMR_SIZE);
-		tx_set_audio_data(&factory->encode_param,enc_out_buff,enc_length);
+
+		if(factory->voice_mode&VOICE_SEND)
+		{
+			voice_net_send(enc_out_buff,enc_length);
+		}
+
+		if(factory->voice_mode&VOICE_RECORD)
+		{
+			voice_data_t * voice_record = calloc(1,sizeof(*voice_record)+1);
+			if(NULL != voice_record)
+			{
+				voice_record->type = RECORD_VOICE_DATA;
+				voice_record->data_length = enc_length;
+				voice_record->time_sample = read_node->time_sample;
+				memmove(voice_record->data,enc_out_buff,voice_record->data_length);
+				ret = record_push_record_data(voice_record);
+				if(ret != 0)
+				{
+					free(voice_record);
+					voice_record = NULL;
+				}
+				
+			}			
+
+		}
+		
 		read_node->status = 0;
 		
-
-		
-
 	}
 
 	return(NULL);
 
 }
+
+
 
 
 
@@ -347,7 +477,13 @@ int voice_system_start_up(void)
     voice_handle->encode_param.sampling_info = GET_SIMPLING_INFO(1, 8000, 16);
 
 	voice_handle->pcm_raw_buff = calloc(1,sizeof(pcm_node_t)*PCM_RAW_BUFF_NUM);
-
+	if(NULL == voice_handle->pcm_raw_buff)
+	{
+		dbg_printf("calloc is fail !\n");
+		return(-1);
+	}
+	voice_handle->voice_mode = 0;
+	
 	pthread_t mic_capture_pthred;
 	pthread_create(&mic_capture_pthred, NULL, voice_mic_capture_pthread, voice_handle);
 	pthread_detach(mic_capture_pthred);

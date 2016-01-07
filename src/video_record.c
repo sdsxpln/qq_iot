@@ -16,6 +16,7 @@
 #include "video_record.h"
 #include "video_stream.h"
 #include "fs_managed.h"
+#include "voice_handle.h"
 
 
 #undef  	DBG_ON
@@ -52,12 +53,21 @@ typedef struct record_video_handle
 	TAILQ_HEAD(record_queue,record_file_node)record_file_queue;
 
 
-	pthread_mutex_t mutex_replay;
-	pthread_cond_t cond_replay;
-	ring_queue_t replay_msg_queue;
-	volatile unsigned int replay_msg_num;
-	volatile unsigned int need_change;
-	FILE * cur_file;
+	pthread_mutex_t mutex_replay_video;
+	pthread_cond_t cond_replay_video;
+	ring_queue_t replay_msg_queue_video;
+	volatile unsigned int replay_msg_num_video;
+	volatile unsigned int need_change_video;
+
+
+	pthread_mutex_t mutex_replay_voice;
+	pthread_cond_t cond_replay_voice;
+	ring_queue_t replay_msg_queue_voice;
+	volatile unsigned int replay_msg_num_voice;
+	volatile unsigned int need_change_voice;
+
+
+	
 
 	struct  record_file_node cur_file_node;
 
@@ -208,10 +218,13 @@ void  record_fetch_history(unsigned int last_time, int max_count, int *count, vo
 	pthread_mutex_unlock(&handle->record_file_mutex);
 
 	tx_history_video_range * cur_range = &handle->cur_file_node.rang;
+
 	range_list[count_video].start_time = cur_range->start_time - 8*3600;
 	range_list[count_video].end_time = cur_range->end_time - 8*3600;
 			
 	*count  = count_video+1;
+
+
 	return;
 	
 
@@ -467,7 +480,7 @@ int record_reinit_handle(void)
 }
 
 
-int  record_process_data(video_data_t * data)
+int  record_process_data(void * data)
 {
 	if(0 == mmc_get_status())
 	{
@@ -551,30 +564,50 @@ int  record_process_data(video_data_t * data)
 		fseek(handle->index_fd,INDEX_FILE_OFFSET,SEEK_SET);
 	}
 
-	if(0 == data->nFrameType)
-	{
-		video_iframe_index_t index;
-		memset(&index,'\0',sizeof(index));
-		fflush(handle->index_fd);
-		fflush(handle->data_fd);
-		index.offset = ftell(handle->data_fd);
-		//index.time_stamp = data->nTimeStamps;
-		
-		index.time_stamp = (unsigned int)time(NULL);
-		memmove(index.magic,RECORD_MAGINC,strlen(RECORD_MAGINC));
-		fwrite((void*)&index,1,sizeof(index),handle->index_fd);
-		handle->iframe_counts += 1;
 
-		range->end_time = index.time_stamp;
+	record_data_type_t record_type = *(record_data_type_t*)data;
+	if(RECORD_VIDEO_DATA == record_type)
+	{
+		video_data_t * video = (video_data_t*)data;
+		if(0 == video->nFrameType)
+		{
+			video_iframe_index_t index;
+			memset(&index,'\0',sizeof(index));
+			fflush(handle->index_fd);
+			//fflush(handle->data_fd);
+			index.offset = ftell(handle->data_fd);
+
+			index.time_stamp = (unsigned int)time(NULL);
+			memmove(index.magic,RECORD_MAGINC,strlen(RECORD_MAGINC));
+			fwrite((void*)&index,1,sizeof(index),handle->index_fd);
+			handle->iframe_counts += 1;
+
+			range->end_time = index.time_stamp;
+		}
+		video_node_header_t head = {0};
+		head.total_size = sizeof(video_data_t) - (VIDEO_DATA_MAX_SIZE-video->nEncDataLen);
+		head.check_flag = RECORD_VIDEO_DATA;
+		fwrite((void*)&head,1,sizeof(head),handle->data_fd);
+		fwrite((void*)video,1,head.total_size,handle->data_fd);
+		video->status = 0;
+		
+	}
+	else
+	{
+		voice_data_t * voice = (voice_data_t*)data;	
+		video_node_header_t head = {0};
+		head.total_size =sizeof(voice_data_t)-(ENCODE_AMR_SIZE-voice->data_length);
+		head.check_flag = RECORD_VOICE_DATA;
+		fwrite((void*)&head,1,sizeof(head),handle->data_fd);
+		fwrite((void*)voice,1,head.total_size,handle->data_fd);
+		if(NULL != voice)
+		{
+			free(voice);
+			voice = NULL;
+		}
 	}
 
-	
-	video_node_header_t head = {0};
-	head.total_size = sizeof(video_data_t) - (VIDEO_DATA_MAX_SIZE-data->nEncDataLen);
-	head.check_flag = data->nTotalIndex+data->nFrameIndex+data->nGopIndex+data->nFrameType;
-	fwrite((void*)&head,1,sizeof(head),handle->data_fd);
 
-	fwrite((void*)data,1,head.total_size,handle->data_fd);
 
 	return(0);
 }
@@ -638,7 +671,7 @@ static void * record_record_pthread(void * arg)
 	record_video_handle_t * handle = (record_video_handle_t*)arg;
 	int ret = -1;
 	int is_run = 1;
-	video_data_t *	video = NULL;
+	void *	record_data = NULL;
 
 	while(is_run)
 	{
@@ -648,18 +681,15 @@ static void * record_record_pthread(void * arg)
         {
             pthread_cond_wait(&(handle->cond_record), &(handle->mutex_record));
         }
-		ret = ring_queue_pop(&(handle->record_msg_queue), (void **)&video);
+		ret = ring_queue_pop(&(handle->record_msg_queue), (void **)&record_data);
 		pthread_mutex_unlock(&(handle->mutex_record));
 		
 		volatile unsigned int * num = &(handle->record_msg_num);
 		fetch_and_sub(num, 1); 
 
-		if(ret != 0 || NULL == video)continue;
+		if(ret != 0 || NULL == record_data)continue;
 
-		record_process_data(video);
-
-		video->status = 0;
-
+		record_process_data(record_data);
 
 	}
 
@@ -676,9 +706,9 @@ int record_replay_send_stop(void)
 		dbg_printf("the handle is null ! \n");
 		return (-1);
 	}
-	pthread_mutex_lock(&(handle->mutex_replay));
-	handle->need_change = 1;
-	pthread_mutex_unlock(&(handle->mutex_replay));
+	pthread_mutex_lock(&(handle->mutex_replay_video));
+	handle->need_change_video = 1;
+	pthread_mutex_unlock(&(handle->mutex_replay_video));
 	
 
 	return(0);
@@ -686,7 +716,7 @@ int record_replay_send_stop(void)
 
 }
 
-int record_push_replay_data(unsigned int play_time, unsigned long long base_time)
+int record_push_replay_video_data(unsigned int play_time, unsigned long long base_time)
 {
 
 	int ret = 1;
@@ -756,11 +786,11 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 	}
 
 
-	pthread_mutex_lock(&(handle->mutex_replay));
+	pthread_mutex_lock(&(handle->mutex_replay_video));
 
 	for (i = 0; i < 1000; i++)
 	{
-	    ret = ring_queue_push(&handle->replay_msg_queue, data);
+	    ret = ring_queue_push(&handle->replay_msg_queue_video, data);
 	    if (ret < 0)
 	    {
 	        usleep(i);
@@ -773,24 +803,69 @@ int record_push_replay_data(unsigned int play_time, unsigned long long base_time
 	}
     if (ret < 0)
     {
-		pthread_mutex_unlock(&(handle->mutex_replay));
+		pthread_mutex_unlock(&(handle->mutex_replay_video));
 		return (-2);
     }
     else
     {
-		volatile unsigned int *task_num = &handle->replay_msg_num;
+		volatile unsigned int *task_num = &handle->replay_msg_num_video;
     	fetch_and_add(task_num, 1);
-		handle->need_change = 1;
+		handle->need_change_video = 1;
     }
-    pthread_mutex_unlock(&(handle->mutex_replay));
-	pthread_cond_signal(&(handle->cond_replay));
+    pthread_mutex_unlock(&(handle->mutex_replay_video));
+	pthread_cond_signal(&(handle->cond_replay_video));
 	return(0);
 }
 
 
 
 
-static void * record_replay_pthread(void * arg)
+static int record_push_replay_voice_data(void * data )
+{
+
+	int ret = 1;
+	int i = 0;
+	if(0 == mmc_get_status())return(-1);
+
+	record_video_handle_t * handle = (record_video_handle_t*)record_handle;
+	if(NULL == handle || NULL== data)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+
+	pthread_mutex_lock(&(handle->mutex_replay_voice));
+
+	for (i = 0; i < 1000; i++)
+	{
+	    ret = ring_queue_push(&handle->replay_msg_queue_voice, data);
+	    if (ret < 0)
+	    {
+	        usleep(i);
+	        continue;
+	    }
+	    else
+	    {
+	        break;
+	    }	
+	}
+    if (ret < 0)
+    {
+		pthread_mutex_unlock(&(handle->mutex_replay_voice));
+		return (-2);
+    }
+    else
+    {
+		volatile unsigned int *task_num = &handle->replay_msg_num_voice;
+    	fetch_and_add(task_num, 1);
+    }
+    pthread_mutex_unlock(&(handle->mutex_replay_voice));
+	pthread_cond_signal(&(handle->cond_replay_voice));
+	return(0);
+}
+
+
+static void * record_replay_video_pthread(void * arg)
 {
 	if(NULL == arg)
 	{
@@ -801,11 +876,12 @@ static void * record_replay_pthread(void * arg)
 	record_video_handle_t * handle = (record_video_handle_t*)arg;
 	int ret = -1;
 	int is_run = 1;
-
+	FILE * cur_file;
 	int read_counts = 0;
 	video_node_header_t data_head = {0};
 	video_data_t	data_send = {0};
-	unsigned int time_offset = 0;
+	voice_data_t	voice_send = {0};
+	int time_offset = 0;
 	unsigned int pre_time_stamps = 0;
 	unsigned int cur_time_stamps = 0;
 	
@@ -815,23 +891,21 @@ static void * record_replay_pthread(void * arg)
 	unsigned long nTotalIndex = 0;
 	while(is_run)
 	{
-
-
-        pthread_mutex_lock(&(handle->mutex_replay));
-        while (0 == handle->replay_msg_num)
+        pthread_mutex_lock(&(handle->mutex_replay_video));
+        while (0 == handle->replay_msg_num_video)
         {
-            pthread_cond_wait(&(handle->cond_replay), &(handle->mutex_replay));
+            pthread_cond_wait(&(handle->cond_replay_video), &(handle->mutex_replay_video));
         }
-		ret = ring_queue_pop(&(handle->replay_msg_queue), (void **)&replay_video);
-		pthread_mutex_unlock(&(handle->mutex_replay));
+		ret = ring_queue_pop(&(handle->replay_msg_queue_video), (void **)&replay_video);
+		pthread_mutex_unlock(&(handle->mutex_replay_video));
 		
-		volatile unsigned int * num = &(handle->replay_msg_num);
+		volatile unsigned int * num = &(handle->replay_msg_num_video);
 		fetch_and_sub(num, 1); 
 
 		if(ret != 0 || NULL == replay_video)continue;
 
-		ret = record_set_replay_offset((void * * )&handle->cur_file,replay_video->file_name,replay_video->play_time);
-		if(0 != ret || NULL == handle->cur_file)
+		ret = record_set_replay_offset((void * * )&cur_file,replay_video->file_name,replay_video->play_time);
+		if(0 != ret || NULL == cur_file)
 		{
 
 			dbg_printf("record_set_replay_offset fail !\n");
@@ -846,9 +920,9 @@ static void * record_replay_pthread(void * arg)
 
 
 		video_send_video_stop();
-		handle->need_change = 0;
-		fread((void*)&data_head,1,sizeof(data_head),handle->cur_file);
-		fread((void*)&data_send,1,data_head.total_size,handle->cur_file);
+		handle->need_change_video = 0;
+		fread((void*)&data_head,1,sizeof(data_head),cur_file);
+		fread((void*)&data_send,1,data_head.total_size,cur_file);
 		pre_time_stamps = data_send.nTimeStamps;
 		cur_time_stamps = replay_video->play_time*1000 - replay_video->base_time-8*3600*1000;
 
@@ -865,35 +939,56 @@ static void * record_replay_pthread(void * arg)
 		nTotalIndex = (nTotalIndex+1)%65535;
 		tx_set_video_data(data_send.data,data_send.nEncDataLen,data_send.nFrameType,cur_time_stamps/*data_send.nTimeStamps*/,nGopIndex,nFrameIndex,nTotalIndex,30);
 
+
+		voice_replay_info_t * voice_replay = calloc(1,sizeof(*voice_replay));
+		if(NULL != voice_replay)
+		{
+			asprintf(&voice_replay->file_name,"%s",replay_video->file_name);
+			voice_replay->offset = ftell(cur_file);
+			ret = record_push_replay_voice_data(voice_replay);
+			if(0 != ret)
+			{
+				free(voice_replay);
+				voice_replay = NULL;
+			}
+
+		}
 		
-		while((0 == handle->need_change) && (0 == feof(handle->cur_file)))
+		
+		while((0 == handle->need_change_video) && (0 == feof(cur_file)))
 		{
 
-			fread((void*)&data_head,1,sizeof(data_head),handle->cur_file);
-			fread((void*)&data_send,1,data_head.total_size,handle->cur_file);
-			time_offset = data_send.nTimeStamps-pre_time_stamps;
-			pre_time_stamps = data_send.nTimeStamps;
+			fread((void*)&data_head,1,sizeof(data_head),cur_file);
+			if(RECORD_VIDEO_DATA == data_head.check_flag)
+			{
+				fread((void*)&data_send,1,data_head.total_size,cur_file);
+				time_offset = data_send.nTimeStamps-pre_time_stamps;
+				pre_time_stamps = data_send.nTimeStamps;
 
-			
-			if(time_offset>0)
-			{
-				usleep(time_offset*1000);
-			}
-			if(I_FRAME == data_send.nFrameType)
-			{
-				nGopIndex = (nGopIndex+1)%65535;	
-				nFrameIndex = 0;
+				if(time_offset>0)
+				{
+					usleep(time_offset*1000);
+				}
+				if(I_FRAME == data_send.nFrameType)
+				{
+					nGopIndex = (nGopIndex+1)%65535;	
+					nFrameIndex = 0;
+				}
+				else
+				{
+					nFrameIndex ++;
+				}
+				nTotalIndex = (nTotalIndex+1)%65535;
+				cur_time_stamps = cur_time_stamps + time_offset;
+				tx_set_video_data(data_send.data,data_send.nEncDataLen,data_send.nFrameType,cur_time_stamps/*data_send.nTimeStamps*/,nGopIndex,nFrameIndex,nTotalIndex,30);
+
 			}
 			else
 			{
-				nFrameIndex ++;
+				fseek(cur_file,data_head.total_size,SEEK_CUR);
 			}
-			nTotalIndex = (nTotalIndex+1)%65535;
-			cur_time_stamps = cur_time_stamps + time_offset;
-			tx_set_video_data(data_send.data,data_send.nEncDataLen,data_send.nFrameType,cur_time_stamps/*data_send.nTimeStamps*/,nGopIndex,nFrameIndex,nTotalIndex,30);
 			
 		}
-
 
 
 clean:
@@ -909,11 +1004,13 @@ clean:
 			replay_video = NULL;
 		}
 
-		if(NULL != handle->cur_file)
+		if(NULL != cur_file)
 		{
-			fclose(handle->cur_file);
-			handle->cur_file = NULL;
+			fclose(cur_file);
+			cur_file = NULL;
 		}
+
+		handle->need_change_voice = 1;
 
 		
 	}
@@ -921,6 +1018,124 @@ clean:
 	return(NULL);
 
 }
+
+
+
+static void * record_replay_voice_pthread(void * arg)
+{
+	if(NULL == arg)
+	{
+		dbg_printf("please check the param ! \n");
+		return(NULL);
+	}
+	
+	record_video_handle_t * handle = (record_video_handle_t*)arg;
+	int ret = -1;
+	int is_run = 1;
+
+	int read_counts = 0;
+	video_node_header_t data_head = {0};
+	voice_data_t	voice_send = {0};
+	char buff[64] = {0};
+	int time_offset = 0;
+	unsigned int pre_time_stamps = 0;
+	unsigned int cur_time_stamps = 0;
+	voice_replay_info_t *	replay_voice = NULL;
+	FILE * voice_file = NULL;
+	while(is_run)
+	{
+        pthread_mutex_lock(&(handle->mutex_replay_voice));
+        while (0 == handle->replay_msg_num_voice)
+        {
+            pthread_cond_wait(&(handle->cond_replay_voice), &(handle->mutex_replay_voice));
+        }
+		ret = ring_queue_pop(&(handle->replay_msg_queue_voice), (void **)&replay_voice);
+		pthread_mutex_unlock(&(handle->mutex_replay_voice));
+		
+		volatile unsigned int * num = &(handle->replay_msg_num_voice);
+		fetch_and_sub(num, 1); 
+
+		if(ret != 0 || NULL == replay_voice)continue;
+
+		memset(buff,'\0',64);
+		snprintf(buff,64,"%s%s",RECORD_PATH,"/");
+		strcat(buff,replay_voice->file_name);
+		voice_file = fopen(buff, "r");
+		if(NULL == voice_file)
+		{
+			dbg_printf("fopen the file fail ! \n");
+			goto clean;
+		}
+		else
+		{
+			dbg_printf("the voice file is %s\n",replay_voice->file_name);
+
+		}
+
+		voice_send_stop();
+		
+		fseek(voice_file,replay_voice->offset,SEEK_SET);
+		while(0 == feof(voice_file))
+		{
+			fread((void*)&data_head,1,sizeof(data_head),voice_file);
+			if(RECORD_VOICE_DATA == data_head.check_flag)break;
+			fseek(voice_file,data_head.total_size,SEEK_CUR);
+
+		}
+
+		fread((void*)&voice_send,1,data_head.total_size,voice_file);
+		pre_time_stamps = voice_send.time_sample;
+		voice_net_send(voice_send.data,voice_send.data_length);
+		handle->need_change_voice = 0;
+		while((0 == handle->need_change_voice)  && (0 == feof(voice_file)))
+		{
+			fread((void*)&data_head,1,sizeof(data_head),voice_file);
+			if(RECORD_VOICE_DATA == data_head.check_flag)
+			{
+				fread((void*)&voice_send,1,data_head.total_size,voice_file);
+				time_offset = voice_send.time_sample-pre_time_stamps;
+				pre_time_stamps = voice_send.time_sample;
+
+				time_offset -= 5;
+				if(time_offset>0)
+				{
+					usleep(time_offset*1000);
+				}
+				voice_net_send(voice_send.data,voice_send.data_length);
+			}
+			else
+			{
+				fseek(voice_file,data_head.total_size,SEEK_CUR);
+			}
+		}
+
+		dbg_printf("i out of it !\n");
+
+clean:
+		if(NULL != replay_voice)
+		{
+			if(NULL != replay_voice->file_name)
+			{
+				free(replay_voice->file_name);
+				replay_voice->file_name = NULL;
+			}
+
+			free(replay_voice);
+			replay_voice = NULL;
+		}
+
+		if(NULL != voice_file)
+		{
+			fclose(voice_file);
+			voice_file = NULL;
+		}
+
+	}
+
+	return(NULL);
+
+}
+
 
 
 
@@ -1025,16 +1240,31 @@ int record_start_up(void)
 	TAILQ_INIT(&record_handle->record_file_queue);
 
 
-	ret = ring_queue_init(&record_handle->replay_msg_queue, 128);
+	ret = ring_queue_init(&record_handle->replay_msg_queue_video, 128);
 	if(ret < 0 )
 	{
 		dbg_printf("ring_queue_init  fail \n");
 
 	}
-    pthread_mutex_init(&(record_handle->mutex_replay), NULL);
-    pthread_cond_init(&(record_handle->cond_replay), NULL);
-	record_handle->replay_msg_num = 0;
-	record_handle->cur_file = NULL;
+    pthread_mutex_init(&(record_handle->mutex_replay_video), NULL);
+    pthread_cond_init(&(record_handle->cond_replay_video), NULL);
+	record_handle->replay_msg_num_video = 0;
+
+
+
+	ret = ring_queue_init(&record_handle->replay_msg_queue_voice, 128);
+	if(ret < 0 )
+	{
+		dbg_printf("ring_queue_init  fail \n");
+
+	}
+    pthread_mutex_init(&(record_handle->mutex_replay_voice), NULL);
+    pthread_cond_init(&(record_handle->cond_replay_voice), NULL);
+	record_handle->replay_msg_num_voice = 0;
+	record_handle->need_change_voice = 0;
+
+
+	
 	
 
 	record_scan_files();
@@ -1045,10 +1275,12 @@ int record_start_up(void)
 	pthread_detach(record_pthid);
 
 	pthread_t replay_pthid;
-	ret = pthread_create(&replay_pthid,NULL,record_replay_pthread,record_handle);
+	ret = pthread_create(&replay_pthid,NULL,record_replay_video_pthread,record_handle);
 	pthread_detach(replay_pthid);
-	
 
+	pthread_t replay_voice_pthid;
+	ret = pthread_create(&replay_voice_pthid,NULL,record_replay_voice_pthread,record_handle);
+	pthread_detach(replay_voice_pthid);
 	
 	return(0);
 }

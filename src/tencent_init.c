@@ -8,8 +8,8 @@
 
 #include "tencent_init.h"
 #include "common.h"
-#include "voice_handle.h"   /*del*/
 #include "msg_handle.h"
+#include "talk_handle.h"
 
 
 
@@ -167,7 +167,17 @@ static bool qq_start_mic()
 {
 
 	dbg_printf("qq_start_mic\n");
-	voice_capture_mic_start();
+
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+1);
+	if(NULL == msg)return(false);
+	msg->cmd = START_MIC_CMD;
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
 	return(true);
 }
 
@@ -177,14 +187,56 @@ static bool qq_stop_mic()
 {
 
 	dbg_printf("qq_stop_mic\n");
-	voice_capture_mic_stop();
+
+	int ret = -1;
+	msg_header_t * msg = calloc(1,sizeof(msg_header_t)+1);
+	if(NULL == msg)return(false);
+	msg->cmd = STOP_MIC_CMD;
+	ret = msg_push(msg);
+	if(0 != ret)
+	{
+		free(msg);
+		msg = NULL;
+	}
+
 	return(true);
 }
 
 
 static void qq_recv_audiodata(tx_audio_encode_param *param, unsigned char *pcEncData, int nEncDataLen)
 {
-	dbg_printf("qq_recv_audiodata\n");
+
+	int ret = -1;
+	if(param->audio_format !=1 || param->encode_param != 7 || nEncDataLen <= 0)
+	{
+		dbg_printf("the format is wrong !\n");
+		return;
+	}
+
+	if(nEncDataLen > TALK_NET_DATA_SIZE)
+	{
+		dbg_printf("out of size !\n");
+		return;
+	}
+
+	talk_net_data_t * talk_data = calloc(1,sizeof(*talk_data));
+	if(NULL == talk_data)
+	{
+		dbg_printf("calloc is fail !\n");
+		return;
+	}
+
+	talk_data->pack_num = param->frame_per_pkg;
+	talk_data->length = nEncDataLen;
+	memmove(talk_data->data,pcEncData,nEncDataLen);
+
+	ret = talk_push_net_data(talk_data);
+	if(0 != ret)
+	{
+		free(talk_data);
+		talk_data = NULL;
+	}
+	
 
 }
 
@@ -216,10 +268,11 @@ static  void qq_play_history_video(unsigned int play_time, unsigned long long ba
 	{
 		record_replay_send_stop();
 		video_send_video_start();
+		voice_send_start();
 	}
 	else
 	{
-		record_push_replay_data(play_time,base_time);
+		record_push_replay_video_data(play_time,base_time);
 	}
 	
 

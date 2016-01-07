@@ -12,6 +12,7 @@
 #include "TXAudioVideo.h"
 #include "video_stream.h"
 #include "monitor_dev.h"
+#include "voice_handle.h"
 
 
 #undef  	DBG_ON
@@ -182,7 +183,7 @@ static int msg_set_bitrate(void * arg)
 		return(-1);
 	}
 	set_bitrate_t * bitrate = (void *)arg;	
-	video_encode_reSetRc(bitrate->bit_rate);
+//	video_encode_reSetRc(bitrate->bit_rate);
 
 
 	return(0);
@@ -242,8 +243,13 @@ static void * msg_handle_pthread(void * arg)
 
 			case STOP_VIDEO_CMD:
 			{
-
 				msg_stop_video();
+				break;
+			}
+
+			case START_VIDEO_CMD:
+			{
+				msg_start_video();
 				break;
 			}
 
@@ -254,11 +260,19 @@ static void * msg_handle_pthread(void * arg)
 				break;
 			}
 
-			case START_VIDEO_CMD:
+			case START_MIC_CMD:
 			{
-				msg_start_video();
+				voice_send_start();
 				break;
 			}
+
+			case STOP_MIC_CMD:
+			{
+				voice_send_stop();
+				break;
+			}
+
+			
 			
 			case ONLINE_STATUS_CMD:
 			{

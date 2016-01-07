@@ -9,6 +9,8 @@ typedef enum cmd_type
 	ONLINE_STATUS_CMD,
 	START_VIDEO_CMD,
 	STOP_VIDEO_CMD,
+	START_MIC_CMD,
+	STOP_MIC_CMD,
 	SET_BITRATE_CMD,
 	VIDEO_DATA_CMD,
 	VOICE_DATA_CMD,
@@ -52,10 +54,17 @@ typedef struct set_bitrate
 }set_bitrate_t;
 
 
+typedef enum
+{
+	RECORD_VIDEO_DATA,
+	RECORD_VOICE_DATA,
+}record_data_type_t;
+
 
 #define  VIDEO_DATA_MAX_SIZE	 (30720)/*(30*1024)*/
 typedef struct video_data
 {
+	record_data_type_t type;
 	unsigned int status;
 	unsigned int nFrameType;
 	unsigned int nEncDataLen;
@@ -66,6 +75,22 @@ typedef struct video_data
 	unsigned char data[VIDEO_DATA_MAX_SIZE];
 	
 }video_data_t;
+
+
+#define  FRAME_NUM_PER_PACKET	(8)
+#define	 ENCODE_PCM_SIZE	(FRAME_NUM_PER_PACKET*320)
+#define	 ENCODE_AMR_SIZE	(FRAME_NUM_PER_PACKET*32)
+
+typedef struct voice_data
+{
+	record_data_type_t type;
+	unsigned int data_length;
+	unsigned long time_sample;
+	unsigned char data[ENCODE_AMR_SIZE];
+	
+}voice_data_t;
+
+
 
 
 
@@ -93,6 +118,33 @@ typedef struct video_replay_info
 	unsigned int play_time;
 	unsigned long long base_time;
 }video_replay_info_t;
+
+
+typedef struct voice_replay_info
+{
+	char * file_name;
+	unsigned long offset;
+	
+}voice_replay_info_t;
+
+
+#define	TALK_NET_DATA_SIZE	(256+1)
+
+typedef struct talk_net_data
+{
+	int pack_num;
+	int length;
+	unsigned char data[TALK_NET_DATA_SIZE];
+
+}talk_net_data_t;
+
+
+#define	TALK_RAW_DATA_SIZE	(1024*3)
+typedef struct talk_raw_data
+{
+	int length;
+	unsigned char data[TALK_RAW_DATA_SIZE];
+}talk_raw_data_t;
 
 
 

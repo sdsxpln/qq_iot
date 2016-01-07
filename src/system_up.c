@@ -10,6 +10,7 @@
 #include "TXIPCAM.h"
 #include "video_stream.h"
 #include "voice_handle.h"
+#include "talk_handle.h"
 #include "monitor_dev.h"
 #include "fs_managed.h"
 
@@ -164,96 +165,16 @@ int system_up(void)
 	}
 
 	voice_system_start_up();
+	talk_handle_start_up();
 
 
 	video_record_video_start();
+	voice_record_start();
 	while(1)
 	{
 		sleep(10);
 	}
 
-	
-
-
-
 
 }
 
-
-#if 0
-int system_up(void)
-{
-
-	int ret = -1;
-	if(system_config_info != NULL )
-	{
-		dbg_printf("system has been init ! \n");
-		return(-1);
-	}
-
-	system_config_info = calloc(1,sizeof(*system_config_info));
-	if(NULL == system_config_info)
-	{
-		dbg_printf("calloc is fail ! \n");
-		return(-1);
-	}
-
-	monitor_start_up();
-
-	ret = msg_handle_start_up();
-	if(0 != ret)
-	{
-		dbg_printf("msg_handle_start_up is fail \n");
-		return(-1);
-	}
-
-	
-	ret = system_tencent_init(system_config_info);
-
-	if(ret != 0 )
-	{
-		dbg_printf("system_tencent_init is fail ! \n");
-	}
-	else
-	{
-		dbg_printf("system_tencent_init is succed ! \n");
-	}
-
-	ret = akuio_pmem_init();
-	if(0 != ret)
-	{
-		dbg_printf("akuio_pmem_init \n");
-		return(-1);
-	}
-	ret = video_stream_up();
-
-
-
-	
-	sleep(2);
-	record_start_up();
-	sleep(1);
-//	ret = replay_start_up();
-	if(0 != ret )
-	{
-
-	}
-	sleep(1);
-	video_record_video_start();
-
-
-	while(1)
-	{
-		sleep(10);
-	}
-
-	
-
-
-
-
-}
-
-
-
-#endif

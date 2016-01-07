@@ -29,10 +29,10 @@ LOCAL_DEV_SRC := \
 		$(LOCAL_SRC)/video_stream.c  \
 		$(LOCAL_SRC)/video_record.c  \
 		$(LOCAL_SRC)/pcm_dev.c  \
-		$(LOCAL_SRC)/amr_loadlib.c  \
 		$(LOCAL_SRC)/amr_decode.c  \
 		$(LOCAL_SRC)/amr_encode.c  \
 		$(LOCAL_SRC)/voice_handle.c  \
+		$(LOCAL_SRC)/talk_handle.c  \
 		$(LOCAL_SRC)/fs_managed.c  \
 		$(LOCAL_SRC)/system_up.c  \
 		$(LOCAL_SRC)/main.c	
