@@ -101,7 +101,7 @@ int mmc_get_status(void)
 	return(mmc_status);
 }
 
-unsigned long mmc_get_free(char * path)/*MB*/
+int mmc_get_free(char * path)/*MB*/
 {
 	int ret = -1;
 	if(0 == mmc_status || NULL == path)return(0);
@@ -111,7 +111,7 @@ unsigned long mmc_get_free(char * path)/*MB*/
 	if(0 != ret)
 	{
 		dbg_printf("statfs is fail ! \n");
-		return(0);
+		return(-1);
 	}
 	
 	return((mmc_fs.f_bavail*mmc_fs.f_bsize)/(1024*1024));

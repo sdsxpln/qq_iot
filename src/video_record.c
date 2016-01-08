@@ -1159,13 +1159,13 @@ int record_manage_files(void)
 	}
 
 	free_size = mmc_get_free(RECORD_PATH);
-	if(free_size <= 0)
+	if(free_size < 0)
 	{
 		dbg_printf("mmc_get_free is fail ! \n");
 		return(-1);
 	}
 
-	dbg_printf("free_size===%d\n",free_size);
+	dbg_printf("mmc_free_size===%d\n",free_size);
 	while(free_size < RECORD_FREE_SIZE)
 	{
 		pthread_mutex_lock(&handle->record_file_mutex);

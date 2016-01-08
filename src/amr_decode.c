@@ -110,18 +110,18 @@ int amr_decode_data(void * handle,unsigned char * data,int length,unsigned char 
 			
 		}
 	}
- 
+
 	T_AUDIO_DECODE_OUT out_put;
 	int out_length = 0;
-	bzero(&out_put,sizeof(out_put));
-	out_put.m_pBuffer = out_buff;
-	out_put.m_ulSize = out_max_size;
-	out_put.m_BitsPerSample = 16;
-	out_put.m_Channels =1;
-	out_put.m_SampleRate = 8000;
 	int real_length = 0;
 	do
 	{
+		bzero(&out_put,sizeof(out_put));
+		out_put.m_pBuffer = out_buff+real_length;
+		out_put.m_ulSize = out_max_size;
+		out_put.m_BitsPerSample = 16;
+		out_put.m_Channels =1;
+		out_put.m_SampleRate = 8000;
 		out_length = _SD_Decode(handle, &out_put);
 		real_length += out_length;
 	}while(out_length > 0 );

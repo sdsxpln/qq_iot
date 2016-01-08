@@ -93,6 +93,48 @@ int talk_push_net_data(void * data )
 }
 
 
+static int talk_push_raw_data(void * data )
+{
+
+	int ret = 1;
+	int i = 0;
+
+	talk_handle_t * handle = (talk_handle_t*)talk;
+	if(NULL == handle || NULL== data)
+	{
+		dbg_printf("check the param ! \n");
+		return(-1);
+	}
+
+	pthread_mutex_lock(&(handle->mutex_play));
+
+	for (i = 0; i < 1000; i++)
+	{
+	    ret = ring_queue_push(&handle->play_msg_queue, data);
+	    if (ret < 0)
+	    {
+	        usleep(i);
+	        continue;
+	    }
+	    else
+	    {
+	        break;
+	    }	
+	}
+    if (ret < 0)
+    {
+		pthread_mutex_unlock(&(handle->mutex_play));
+		return (-2);
+    }
+    else
+    {
+		volatile unsigned int *task_num = &handle->play_msg_num;
+    	fetch_and_add(task_num, 1);
+    }
+    pthread_mutex_unlock(&(handle->mutex_play));
+	pthread_cond_signal(&(handle->cond_play));
+	return(0);
+}
 
 
 static void * talk_process_net_data_pthread(void * arg)
@@ -139,7 +181,7 @@ static void * talk_process_net_data_pthread(void * arg)
 			continue;
 		}
 		raw_data->length = amr_decode_data(amr_decode,net_data->data,net_data->length,raw_data->data,TALK_RAW_DATA_SIZE);
-		dbg_printf("the input length is == %d the out length is %d\n",net_data->length,out_length);
+		dbg_printf("the input length is == %d the out length is %d\n",net_data->length,raw_data->length);
 		if(NULL != net_data)
 		{
 			free(net_data);
@@ -150,6 +192,16 @@ static void * talk_process_net_data_pthread(void * arg)
 		{
 			free(raw_data);
 			raw_data = NULL;
+		}
+		else
+		{
+			ret = talk_push_raw_data(raw_data);
+			if(ret != 0)
+			{
+				free(raw_data);
+				raw_data = NULL;
+			}
+
 		}
 
 				
@@ -165,6 +217,23 @@ static void * talk_process_net_data_pthread(void * arg)
 
 }
 
+
+
+static void talk_1c_to_2c(unsigned char dest[], unsigned char src[],int size)
+										
+{
+	int j;
+
+	for (j = 0; j < size / 2; j++) {
+		dest[j * 4] = *(src + j * 2);
+		dest[j * 4 + 1] = *(src + j * 2 + 1);
+		dest[j * 4 + 2] = *(src + j * 2);
+		dest[j * 4 + 3] = *(src + j * 2 + 1);
+	}
+}
+
+
+
 static void * talk_play_raw_data_pthread(void * arg )
 {
 
@@ -176,52 +245,55 @@ static void * talk_play_raw_data_pthread(void * arg )
 	}
 	int ret = -1;
 	int is_run = 1;
-	talk_net_data_t * net_data = NULL;
-	void * amr_decode = handle->decode_handle;
-	if(NULL == amr_decode)
+	talk_raw_data_t * raw_data = NULL;
+	void * da_handle = handle->da_handle;
+	if(NULL == da_handle)
 	{
-		dbg_printf("amr_decode is null \n");
+		dbg_printf("da_handle is null \n");
 		return(NULL);
 	}
-	
+	unsigned char raw_2c_data[TALK_RAW_DATA_SIZE*2];
+	int count_node0 = 0;
+	int count_node1 = 0;
+	int i = 0;
+	pcm_da_spk_enable(1);
+    pcm_da_filter_enable(da_handle, 1);
+	pcm_da_set_vol(da_handle, 5);
 	while(is_run)
 	{
-        pthread_mutex_lock(&(handle->mutex_talk));
-        while (0 == handle->talk_msg_num)
+        pthread_mutex_lock(&(handle->mutex_play));
+        while (0 == handle->play_msg_num)
         {
-            pthread_cond_wait(&(handle->cond_talk), &(handle->mutex_talk));
+            pthread_cond_wait(&(handle->cond_play), &(handle->mutex_play));
         }
-		ret = ring_queue_pop(&(handle->talk_msg_queue), (void **)&net_data);
-		pthread_mutex_unlock(&(handle->mutex_talk));
+		ret = ring_queue_pop(&(handle->play_msg_queue), (void **)&raw_data);
+		pthread_mutex_unlock(&(handle->mutex_play));
 		
-		volatile unsigned int *handle_num = &(handle->talk_msg_num);
+		volatile unsigned int *handle_num = &(handle->play_msg_num);
 		fetch_and_sub(handle_num, 1);  
-		if(ret != 0 || NULL == net_data)continue;
+		if(ret != 0 || NULL == raw_data)continue;
 
-		int out_length = 0;
-		unsigned char buff[4096];
+		talk_1c_to_2c(raw_2c_data,raw_data->data,raw_data->length);
 
-		talk_raw_data_t * raw_data = calloc(1,sizeof(*raw_data));
-		if(NULL == raw_data)
+		count_node0 = (raw_data->length*2)/4096;
+
+		for(i=0;i<count_node0;++i)
 		{
-			usleep(100*1000);
-			continue;
-		}
-		raw_data->length = amr_decode_data(amr_decode,net_data->data,net_data->length,raw_data->data,TALK_RAW_DATA_SIZE);
-		dbg_printf("the input length is == %d the out length is %d\n",net_data->length,out_length);
-		if(NULL != net_data)
-		{
-			free(net_data);
-			net_data = NULL;
+			pcm_write_da(da_handle,raw_2c_data+i*4096,4096);
 		}
 
-		if(raw_data->length <= 0)
+		count_node1 = (raw_data->length*2)%4096;
+		if(count_node1>0)
+		{
+			pcm_write_da(da_handle,raw_2c_data+count_node0*4096,count_node1);	
+		}
+		
+		if(NULL != raw_data)
 		{
 			free(raw_data);
 			raw_data = NULL;
 		}
 
-				
 
 	}
 	
@@ -275,9 +347,7 @@ int talk_handle_start_up(void)
 
 	talk->decode_handle = amr_decode_open();
 	
-	
-
-
+	talk->da_handle = pcm_da_open(8000,16);
 
 	pthread_t talk_process_pthred;
 	pthread_create(&talk_process_pthred, NULL, talk_process_net_data_pthread, talk);

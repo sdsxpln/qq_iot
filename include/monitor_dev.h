@@ -10,7 +10,7 @@
 
 
 
-unsigned long mmc_get_free(char * path);
+int mmc_get_free(char * path);
 int mmc_process(int flag);
 int monitor_start_up(void);
 int mmc_get_status(void);
