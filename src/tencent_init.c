@@ -268,7 +268,7 @@ static  void qq_play_history_video(unsigned int play_time, unsigned long long ba
 	{
 		record_replay_send_stop();
 		video_send_video_start();
-		voice_send_start();
+		voice_send_net_start();
 	}
 	else
 	{

@@ -3,7 +3,7 @@
 
 
 
-int talk_handle_start_up(void);
+int talk_handle_center_up(void);
 int talk_push_net_data(void * data );
 
 

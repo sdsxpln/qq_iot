@@ -305,7 +305,7 @@ static void * talk_play_raw_data_pthread(void * arg )
 
 
 
-int talk_handle_start_up(void)
+int talk_handle_center_up(void)
 {
 
 	int ret = -1;

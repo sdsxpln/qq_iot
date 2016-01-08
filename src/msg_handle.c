@@ -262,13 +262,13 @@ static void * msg_handle_pthread(void * arg)
 
 			case START_MIC_CMD:
 			{
-				voice_send_start();
+				voice_send_net_start();
 				break;
 			}
 
 			case STOP_MIC_CMD:
 			{
-				voice_send_stop();
+				voice_send_net_stop();
 				break;
 			}
 
@@ -324,7 +324,7 @@ static void * msg_handle_pthread(void * arg)
 
 
 
-int msg_handle_start_up(void)
+int msg_handle_center_up(void)
 {
 	int ret = -1;
 	ret = msg_handle_init();

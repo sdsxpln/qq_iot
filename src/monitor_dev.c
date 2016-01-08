@@ -282,10 +282,10 @@ static void * monitor_fun(void * arg)
 }
 
 
-
+/*加入刚开始容量不够的检测*/
 
   
- int monitor_start_up(void)
+ int monitor_handle_dev_up(void)
  {
 
  	umount(MMC_PATH);

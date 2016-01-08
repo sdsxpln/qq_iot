@@ -37,7 +37,7 @@ typedef struct fs_node
 
 
 
-int fs_managed_start_up(void);
+int fs_handle_managed_up(void);
 int fs_hangle_file(	file_type_m type,fs_action_m cmd,char * file_path);
 
 

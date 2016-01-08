@@ -77,7 +77,7 @@ static voice_system_t * voice_handle  = NULL;
 
 
 
-static int voice_capture_mic_start(void)
+static int voice_capture_mic_open(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -94,7 +94,7 @@ static int voice_capture_mic_start(void)
 
 
 
-static int voice_capture_mic_stop(void)
+static int voice_capture_mic_close(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -111,7 +111,7 @@ static int voice_capture_mic_stop(void)
 
 
 
-int voice_send_start(void)
+int voice_send_net_start(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -122,7 +122,7 @@ int voice_send_start(void)
 	}
 	pthread_mutex_lock(&(factory->mutex_mic));
 	factory->voice_mode |= VOICE_SEND;
-	voice_capture_mic_start();
+	voice_capture_mic_open();
 	pthread_mutex_unlock(&(factory->mutex_mic));
 
 
@@ -130,7 +130,7 @@ int voice_send_start(void)
 }
 
 
-int voice_send_stop(void)
+int voice_send_net_stop(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -143,7 +143,7 @@ int voice_send_stop(void)
 	factory->voice_mode &= ~VOICE_SEND;
 	if(0 == factory->voice_mode&VOICE_RECORD)
 	{
-		voice_capture_mic_stop();
+		voice_capture_mic_close();
 	}
 	pthread_mutex_unlock(&(factory->mutex_mic));
 	
@@ -151,7 +151,7 @@ int voice_send_stop(void)
 }
 
 
-int voice_record_start(void)
+int voice_record_voice_start(void)
 {
 
 	voice_system_t * factory = (voice_system_t*)voice_handle;
@@ -162,14 +162,14 @@ int voice_record_start(void)
 	}
 	pthread_mutex_lock(&(factory->mutex_mic));
 	factory->voice_mode |= VOICE_RECORD;
-	voice_capture_mic_start();
+	voice_capture_mic_open();
 	pthread_mutex_unlock(&(factory->mutex_mic));
 	return(0);
 }
 
 
 
-int voice_record_stop(void)
+int voice_record_voice_stop(void)
 {
 
 
@@ -183,14 +183,14 @@ int voice_record_stop(void)
 	factory->voice_mode &= ~VOICE_RECORD;
 	if(0 == factory->voice_mode&VOICE_SEND)
 	{
-		voice_capture_mic_stop();
+		voice_capture_mic_close();
 	}
 	pthread_mutex_unlock(&(factory->mutex_mic));
 	return(0);
 }
 
 
-int voice_net_send(unsigned char *enc_data, int data_len)
+int voice_fill_net_data(unsigned char *enc_data, int data_len)
 {
 
 	voice_system_t * factory = (voice_system_t * )voice_handle;
@@ -378,7 +378,7 @@ static void *  voice_mic_process_pthread(void * arg)
 
 		if(factory->voice_mode&VOICE_SEND)
 		{
-			voice_net_send(enc_out_buff,enc_length);
+			voice_fill_net_data(enc_out_buff,enc_length);
 		}
 
 		if(factory->voice_mode&VOICE_RECORD)
@@ -413,7 +413,7 @@ static void *  voice_mic_process_pthread(void * arg)
 
 
 
-int voice_system_start_up(void)
+int voice_handle_center_up(void)
 {
 
 	int ret = -1;

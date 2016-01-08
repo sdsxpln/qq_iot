@@ -205,7 +205,7 @@ static void * fs_managed_pthread(void * arg)
 
 
 
-int fs_managed_start_up(void)
+int fs_handle_managed_up(void)
 {
 
 	int ret = -1;

@@ -218,12 +218,19 @@ void  record_fetch_history(unsigned int last_time, int max_count, int *count, vo
 	pthread_mutex_unlock(&handle->record_file_mutex);
 
 	tx_history_video_range * cur_range = &handle->cur_file_node.rang;
-
-	range_list[count_video].start_time = cur_range->start_time - 8*3600;
-	range_list[count_video].end_time = cur_range->end_time - 8*3600;
-			
-	*count  = count_video+1;
-
+	//if((cur_range->start_time - 8*3600 > 0) && (cur_range->end_time - 8*3600 > 0))
+	if(cur_range->end_time > cur_range->start_time)
+	{
+		dbg_printf("come here1!\n");
+		range_list[count_video].start_time = cur_range->start_time - 8*3600;
+		range_list[count_video].end_time = cur_range->end_time - 8*3600;
+		*count  = count_video+1;
+	}
+	else
+	{
+		dbg_printf("come here2!\n");
+		*count  = count_video;	
+	}
 
 	return;
 	
@@ -527,7 +534,8 @@ int  record_process_data(void * data)
 		handle->iframe_counts = 0;
 
 		handle->cur_file_node.file_name = atol(handle->record_file_name);
-		range->start_time = handle->cur_file_node.file_name;
+		range->start_time = (unsigned int)time(NULL);
+
 
 		if(NULL != handle->data_fd)
 		{
@@ -583,6 +591,7 @@ int  record_process_data(void * data)
 			handle->iframe_counts += 1;
 
 			range->end_time = index.time_stamp;
+
 		}
 		video_node_header_t head = {0};
 		head.total_size = sizeof(video_data_t) - (VIDEO_DATA_MAX_SIZE-video->nEncDataLen);
@@ -921,7 +930,16 @@ static void * record_replay_video_pthread(void * arg)
 
 		video_send_video_stop();
 		handle->need_change_video = 0;
-		fread((void*)&data_head,1,sizeof(data_head),cur_file);
+
+		
+		while(0 == feof(cur_file))
+		{
+			fread((void*)&data_head,1,sizeof(data_head),cur_file);
+			if(RECORD_VIDEO_DATA == data_head.check_flag)break;
+			fseek(cur_file,data_head.total_size,SEEK_CUR);
+
+		}
+		
 		fread((void*)&data_send,1,data_head.total_size,cur_file);
 		pre_time_stamps = data_send.nTimeStamps;
 		cur_time_stamps = replay_video->play_time*1000 - replay_video->base_time-8*3600*1000;
@@ -1072,7 +1090,7 @@ static void * record_replay_voice_pthread(void * arg)
 
 		}
 
-		voice_send_stop();
+		voice_send_net_stop();
 		
 		fseek(voice_file,replay_voice->offset,SEEK_SET);
 		while(0 == feof(voice_file))
@@ -1085,7 +1103,7 @@ static void * record_replay_voice_pthread(void * arg)
 
 		fread((void*)&voice_send,1,data_head.total_size,voice_file);
 		pre_time_stamps = voice_send.time_sample;
-		voice_net_send(voice_send.data,voice_send.data_length);
+		voice_fill_net_data(voice_send.data,voice_send.data_length);
 		handle->need_change_voice = 0;
 		while((0 == handle->need_change_voice)  && (0 == feof(voice_file)))
 		{
@@ -1101,7 +1119,7 @@ static void * record_replay_voice_pthread(void * arg)
 				{
 					usleep(time_offset*1000);
 				}
-				voice_net_send(voice_send.data,voice_send.data_length);
+				voice_fill_net_data(voice_send.data,voice_send.data_length);
 			}
 			else
 			{
@@ -1204,7 +1222,7 @@ int record_manage_files(void)
 
 
 
-int record_start_up(void)
+int record_handle_center_up(void)
 {
 
 	int ret = -1;

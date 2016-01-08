@@ -61,7 +61,7 @@ typedef enum
 }record_data_type_t;
 
 
-#define  VIDEO_DATA_MAX_SIZE	 (30720)/*(30*1024)*/
+#define  VIDEO_DATA_MAX_SIZE	 (51200)/*(50*1024)*/
 typedef struct video_data
 {
 	record_data_type_t type;
@@ -170,6 +170,6 @@ typedef struct monitor_eth
 
 
 int  msg_push(void * data );
-int msg_handle_start_up(void);
+int msg_handle_center_up(void);
 
 #endif   /*_msg_handle_h*/

@@ -12,7 +12,7 @@
 
 int mmc_get_free(char * path);
 int mmc_process(int flag);
-int monitor_start_up(void);
+int monitor_handle_dev_up(void);
 int mmc_get_status(void);
 
 #endif  /*_monitor_dev_h*/

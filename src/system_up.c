@@ -55,7 +55,7 @@ void system_free_config(void * arg)
 }
 
 
-int system_tencent_init(void * arg)
+int system_tencent_init_up(void * arg)
 {
 	
 	if(NULL == arg)
@@ -118,43 +118,23 @@ int system_up(void)
 		return(-1);
 	}
 
-	fs_managed_start_up();
-	monitor_start_up();
-
-
-
 	ret = akuio_pmem_init();
 	if(0 != ret)
 	{
 		dbg_printf("akuio_pmem_init \n");
 		return(-1);
 	}
-	
-	ret = video_stream_up();
-	if(0 != ret)
-	{
-		dbg_printf("video_stream_up fail ! \n");
-		return(-1);
-	}
 
-	ret = msg_handle_start_up();
-	if(0 != ret)
-	{
-		dbg_printf("msg_handle_start_up is fail \n");
-		return(-1);
-	}
-
-	sleep(1);
-	ret = record_start_up();
-	if(0 != ret)
-	{
-		dbg_printf("record_start_up fail ! \n");
-	}
-	
+	fs_handle_managed_up();
+	monitor_handle_dev_up();
+	video_handle_stream_up();
+	msg_handle_center_up();
+	record_handle_center_up();
+	voice_handle_center_up();
+	talk_handle_center_up();
 
 	
-	ret = system_tencent_init(system_config_info);
-
+	ret = system_tencent_init_up(system_config_info);
 	if(ret != 0 )
 	{
 		dbg_printf("system_tencent_init is fail ! \n");
@@ -164,12 +144,12 @@ int system_up(void)
 		dbg_printf("system_tencent_init is succed ! \n");
 	}
 
-	voice_system_start_up();
-	talk_handle_start_up();
-
-
+	sleep(2);
 	video_record_video_start();
-	voice_record_start();
+	voice_record_voice_start();
+	
+	
+
 	while(1)
 	{
 		sleep(10);
