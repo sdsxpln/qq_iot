@@ -360,7 +360,7 @@ static int  video_fill_record_data(unsigned char *pcEncData, int nEncDataLen,int
 		return(-1);
 	}
 
-	dbg_printf("nFrameType==%d nEncDataLen==%dkb\n",nFrameType,nEncDataLen/1024);
+	//dbg_printf("nFrameType==%d nEncDataLen==%dkb\n",nFrameType,nEncDataLen/1024);
 	for(i=0;i<VIDEO_BUFFER_COUNTS;++i)
 	{
 		if(0 == video->status)
