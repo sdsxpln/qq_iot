@@ -434,7 +434,6 @@ void * camera_new_dev(const char * dev_path)
 	}
 	
 
-
 	struct v4l2_capability cap;
 	memset(&cap,0,sizeof(cap));
 	ret = xioctl(new_camera->camera_fd, VIDIOC_QUERYCAP,&cap);

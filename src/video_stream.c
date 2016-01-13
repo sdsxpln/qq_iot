@@ -201,7 +201,7 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.qpMax = 36;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
-    open_input.encH264Par.gopLen = 50; 
+    open_input.encH264Par.gopLen = 60; 
 
 	new_handle->rc.qpHdr = -1;
 	new_handle->rc.qpMin = open_input.encH264Par.qpMin;
@@ -556,6 +556,8 @@ static void * video_capture_pthread(void * arg)
 }
 
 
+static int count_frames = 0;
+
 static void * video_encode_pthread(void * arg)
 {
 
@@ -630,6 +632,7 @@ static void * video_encode_pthread(void * arg)
 
 		if(handle->video_mode & SEND_VIDEO)
 		{
+			count_frames+=1;
 			tx_set_video_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex,30);
 		}
 
@@ -637,6 +640,8 @@ static void * video_encode_pthread(void * arg)
 		{
 			video_fill_record_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex);
 		}
+
+		
 		
 
 		camera_free_frame(dev,frame_buf);
@@ -693,7 +698,7 @@ static  int video_stream_init(void)
 		goto fail;
 	}
 
-	stream_handle->bit_rate = 200;
+	stream_handle->bit_rate = 300;
 	stream_handle->encode_handle = video_new_encode(stream_handle->bit_rate*1024);
 	if(NULL == stream_handle->encode_handle)
 	{
@@ -702,7 +707,7 @@ static  int video_stream_init(void)
 	}
 	stream_handle->frame_count = 0;
 	stream_handle->force_iframe = 0;
-	stream_handle->iframe_gap = 50;
+	stream_handle->iframe_gap = 60;
 	stream_handle->video_mode = 0;
 	
 	return(0);
@@ -729,6 +734,20 @@ fail:
 }
 
 
+
+static void * test_count_pthread(void * arg)
+{
+	while(1)
+	{
+		dbg_printf("count_frames====%d\n",count_frames);
+		count_frames = 0;
+		sleep(1);
+
+
+	}
+
+
+}
 
 int video_handle_stream_up(void)
 {
@@ -766,6 +785,12 @@ int video_handle_stream_up(void)
 	pthread_t encode_video_pthid;
 	ret = pthread_create(&encode_video_pthid,NULL,video_encode_pthread,stream_handle);
 	pthread_detach(encode_video_pthid);
+
+
+//	pthread_t test_count_pthid;
+//	ret = pthread_create(&test_count_pthid,NULL,test_count_pthread,stream_handle);
+//	pthread_detach(test_count_pthid);
+
 
 
 	return(0);
