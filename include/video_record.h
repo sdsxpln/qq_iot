@@ -11,12 +11,13 @@
 #define DATA_FILE_OFFSET	(72000)
 
 
-void  record_fetch_history(unsigned int last_time, int max_count, int *count, void * range );
-int record_push_replay_video_data(unsigned int play_time, unsigned long long base_time);
-int record_replay_send_stop(void);
-int record_push_record_data(void * data );
-int record_handle_center_up(void);
-int record_reinit_handle(void);
-int record_manage_files(void);
+static void  record_fetch_history(unsigned int last_time, int max_count, int *count, void * range ){}
+
+static int record_push_replay_video_data(unsigned int play_time, unsigned long long base_time){}
+static int record_replay_send_stop(void){}
+//int record_push_record_data(void * data );
+static int record_handle_center_up(void){}
+static int record_reinit_handle(void){}
+static int record_manage_files(void){}
 
 #endif /*_video_record_h*/

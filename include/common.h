@@ -1,5 +1,25 @@
-#ifndef  _COMMON_H
-#define  _COMMON_H
+#ifndef _common_h_
+#define _common_h_
+
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <semaphore.h>
+#include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <semaphore.h>
+#include <time.h>
+#include <sys/time.h>
+#include <dirent.h>
+
+#include "basetype.h"
+#include "anyka_types.h"
 
 #define  compare_and_swap(lock,old,set)		__sync_bool_compare_and_swap(lock,old,set)
 #define  fetch_and_add(value,add)			__sync_fetch_and_add(value,add)
@@ -15,20 +35,5 @@
 	do{if(DBG_ON)fprintf(stderr,FILE_NAME"%s(line=%d)->"fmt,__FUNCTION__,__LINE__,##arg);}while(0)
 
 
-
-#define err_abort(code,text) do { \
-	fprintf (stderr, "%s at \"%s\":%d: %s\n", \
-	text, __FILE__, __LINE__, strerror (code)); \
-	abort (); \
-	} while (0)
-
-	
-#define errno_abort(text) do { \
-	fprintf (stderr, "%s at \"%s\":%d: %s\n", \
-	text, __FILE__, __LINE__, strerror (errno)); \
-	abort (); \
-	} while (0)
-	
-
-
 #endif
+

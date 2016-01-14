@@ -10,6 +10,7 @@
 #include "common.h"
 #include "msg_handle.h"
 #include "talk_handle.h"
+#include "video_record.h"
 
 
 

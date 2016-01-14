@@ -61,6 +61,10 @@ typedef enum
 }record_data_type_t;
 
 
+#define  FRAME_FPS_NUM		(30)
+#define  FRAME_GAP_NUM		(60)
+#define	 FRAME_BIT_RATE	 	(200)
+
 #define  VIDEO_DATA_MAX_SIZE	 (51200)/*(50*1024)*/
 typedef struct video_data
 {
@@ -80,6 +84,7 @@ typedef struct video_data
 #define  FRAME_NUM_PER_PACKET	(8)
 #define	 ENCODE_PCM_SIZE	(FRAME_NUM_PER_PACKET*320)
 #define	 ENCODE_AMR_SIZE	(FRAME_NUM_PER_PACKET*32)
+
 
 typedef struct voice_data
 {

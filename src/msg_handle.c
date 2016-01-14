@@ -13,6 +13,7 @@
 #include "video_stream.h"
 #include "monitor_dev.h"
 #include "voice_handle.h"
+#include "video_record.h"
 
 
 #undef  	DBG_ON

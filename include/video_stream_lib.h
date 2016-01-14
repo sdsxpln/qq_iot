@@ -126,8 +126,6 @@
 extern "C" {
 #endif
 
-#include "anyka_types.h"
-
 #define VIDEO_LIB_VERSION		"AK39 Encoder Lib V1.2.00"
 
 //typedef enum
@@ -223,12 +221,12 @@ typedef struct _VIDEO_ENC_H264_PAR
 	
 	T_S32				frameRateDenom;	//帧率的分母
 	T_S32				frameRateNum;	//帧率的分子
-	T_S32				qpHdr;			//初始的QP的值 /*用于设置视频的质量*/
+	T_S32				qpHdr;			//初始的QP的值
     T_U32 				qpMin;           
 	T_U32 				qpMax;    
 	T_U32 				gopLen;       
 	T_S32				fixedIntraQp;	//为所有的intra帧设置QP
-	T_S32				bitPerSecond;	//目标bps /*比特率，数据传输速度*/
+	T_S32				bitPerSecond;	//目标bps
 	EncStreamType 	streamType;		//有startcode和没startcode两种
 	//T_U8*				outStreamBuf;
 	//T_U32				maxVideoSize;

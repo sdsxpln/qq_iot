@@ -190,7 +190,7 @@ static  void * video_new_encode(unsigned int bps)
 	
 	open_input.encH264Par.rotation = ENC_ROTATE_0;		
 	open_input.encH264Par.frameRateDenom = 1;
-	open_input.encH264Par.frameRateNum = 25;	
+	open_input.encH264Par.frameRateNum = 30;	
 	
 	open_input.encH264Par.qpHdr = -1;		
   	open_input.encH264Par.streamType = 0;	
@@ -198,10 +198,10 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.transform8x8Mode = 0;
 	
 	open_input.encH264Par.qpMin = 10;        
-	open_input.encH264Par.qpMax = 36;
+	open_input.encH264Par.qpMax = 40;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
-    open_input.encH264Par.gopLen = 60; 
+    open_input.encH264Par.gopLen = FRAME_GAP_NUM; 
 
 	new_handle->rc.qpHdr = -1;
 	new_handle->rc.qpMin = open_input.encH264Par.qpMin;
@@ -375,7 +375,12 @@ static int  video_fill_record_data(unsigned char *pcEncData, int nEncDataLen,int
 			video->nTotalIndex = nTotalIndex;
 			video->nEncDataLen = nEncDataLen;
 			memmove(video->data,pcEncData,video->nEncDataLen);
+
+			#if 0
 			record_push_record_data(video);
+			#else
+			mux_push_record_data(video);
+			#endif
 			break;
 		}
 		video += 1;
@@ -698,7 +703,7 @@ static  int video_stream_init(void)
 		goto fail;
 	}
 
-	stream_handle->bit_rate = 300;
+	stream_handle->bit_rate = FRAME_BIT_RATE;
 	stream_handle->encode_handle = video_new_encode(stream_handle->bit_rate*1024);
 	if(NULL == stream_handle->encode_handle)
 	{
@@ -707,7 +712,7 @@ static  int video_stream_init(void)
 	}
 	stream_handle->frame_count = 0;
 	stream_handle->force_iframe = 0;
-	stream_handle->iframe_gap = 60;
+	stream_handle->iframe_gap = FRAME_GAP_NUM;
 	stream_handle->video_mode = 0;
 	
 	return(0);

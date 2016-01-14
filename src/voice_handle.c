@@ -390,7 +390,12 @@ static void *  voice_mic_process_pthread(void * arg)
 				voice_record->data_length = enc_length;
 				voice_record->time_sample = read_node->time_sample;
 				memmove(voice_record->data,enc_out_buff,voice_record->data_length);
+				#if 0
 				ret = record_push_record_data(voice_record);
+				#else
+				ret = mux_push_record_data(voice_record);
+
+				#endif
 				if(ret != 0)
 				{
 					free(voice_record);

@@ -13,6 +13,7 @@
 #include "talk_handle.h"
 #include "monitor_dev.h"
 #include "fs_managed.h"
+#include "muxer_media.h"
 
 
 
@@ -105,6 +106,9 @@ int system_up(void)
 {
 
 	int ret = -1;
+
+	dbg_printf("this is a test for it !\n");
+#if 1
 	if(system_config_info != NULL )
 	{
 		dbg_printf("system has been init ! \n");
@@ -129,7 +133,6 @@ int system_up(void)
 	monitor_handle_dev_up();
 	video_handle_stream_up();
 	msg_handle_center_up();
-	record_handle_center_up();
 	voice_handle_center_up();
 	talk_handle_center_up();
 
@@ -144,16 +147,17 @@ int system_up(void)
 		dbg_printf("system_tencent_init is succed ! \n");
 	}
 
+#endif
+
+	muxer_media_handle_up();
+	#if 0
+	record_handle_center_up();
 	sleep(2);
 	video_record_video_start();
 	voice_record_voice_start();
-	
+	#endif
 	
 
-	while(1)
-	{
-		sleep(10);
-	}
 
 
 }

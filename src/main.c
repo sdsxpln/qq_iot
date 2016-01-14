@@ -38,14 +38,20 @@ static void sigprocess(int sig)
 
 }
 
+
+#include "muxer_media.h"
 int main(void)
 {
+
+#if 0
+	muxer_media_handle_up();
+	return -1;
 	dbg_printf("this is a test ! \n");
 	signal(SIGSEGV, sigprocess);
 	signal(SIGINT, sigprocess);
 	signal(SIGTERM, sigprocess);
 	sync_time_up();
-	
+#endif
 	
 	system_up();
 	return(0);

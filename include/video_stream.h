@@ -18,6 +18,10 @@ typedef enum
 }video_mode_t;
 
 
+
+
+
+
 int video_handle_stream_up(void);
 int video_encode_reSetRc(int bit_rate);
 
