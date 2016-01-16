@@ -44,15 +44,13 @@ int main(void)
 {
 
 #if 0
-	muxer_media_handle_up();
-	return -1;
 	dbg_printf("this is a test ! \n");
 	signal(SIGSEGV, sigprocess);
 	signal(SIGINT, sigprocess);
 	signal(SIGTERM, sigprocess);
-	sync_time_up();
 #endif
-	
+	sync_time_up();
 	system_up();
+	while(1)sleep(100);
 	return(0);
 }

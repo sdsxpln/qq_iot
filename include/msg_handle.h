@@ -63,7 +63,7 @@ typedef enum
 
 #define  FRAME_FPS_NUM		(30)
 #define  FRAME_GAP_NUM		(60)
-#define	 FRAME_BIT_RATE	 	(200)
+#define	 FRAME_BIT_RATE	 	(500)
 
 #define  VIDEO_DATA_MAX_SIZE	 (51200)/*(50*1024)*/
 typedef struct video_data

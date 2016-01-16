@@ -108,7 +108,7 @@ int system_up(void)
 	int ret = -1;
 
 	dbg_printf("this is a test for it !\n");
-#if 1
+
 	if(system_config_info != NULL )
 	{
 		dbg_printf("system has been init ! \n");
@@ -136,7 +136,6 @@ int system_up(void)
 	voice_handle_center_up();
 	talk_handle_center_up();
 
-	
 	ret = system_tencent_init_up(system_config_info);
 	if(ret != 0 )
 	{
@@ -147,15 +146,17 @@ int system_up(void)
 		dbg_printf("system_tencent_init is succed ! \n");
 	}
 
-#endif
 
+
+	#if 1
 	muxer_media_handle_up();
-	#if 0
+	#else
 	record_handle_center_up();
+	#endif
 	sleep(2);
 	video_record_video_start();
 	voice_record_voice_start();
-	#endif
+
 	
 
 

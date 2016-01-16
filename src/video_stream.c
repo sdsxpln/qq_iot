@@ -190,7 +190,7 @@ static  void * video_new_encode(unsigned int bps)
 	
 	open_input.encH264Par.rotation = ENC_ROTATE_0;		
 	open_input.encH264Par.frameRateDenom = 1;
-	open_input.encH264Par.frameRateNum = 30;	
+	open_input.encH264Par.frameRateNum = FRAME_FPS_NUM;	
 	
 	open_input.encH264Par.qpHdr = -1;		
   	open_input.encH264Par.streamType = 0;	
@@ -198,7 +198,7 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.transform8x8Mode = 0;
 	
 	open_input.encH264Par.qpMin = 10;        
-	open_input.encH264Par.qpMax = 40;
+	open_input.encH264Par.qpMax = 42;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
     open_input.encH264Par.gopLen = FRAME_GAP_NUM; 
@@ -643,6 +643,7 @@ static void * video_encode_pthread(void * arg)
 
 		if(handle->video_mode & RECORD_VIDEO)
 		{
+
 			video_fill_record_data(out_buff,size,i_frame,timeStamp,nGopIndex,nFrameIndex,nTotalIndex);
 		}
 
