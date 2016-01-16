@@ -643,6 +643,7 @@ static int mux_media_add_audio(void *mux_handle, void *pbuf, unsigned long size,
 		dbg_printf("MediaLib_Mux_AddAudioData is fail!\n");
 		return(-1);
 	}
+//	MediaLib_Mux_Handle(mux_handle);
     return 0;
 }
 
@@ -662,6 +663,7 @@ static int mux_media_add_video(void *mux_handle, void *pbuf, unsigned long size,
 		dbg_printf("MediaLib_Mux_AddVideoData add fail!\n");
 		return(-1);
 	}
+//	MediaLib_Mux_Handle(mux_handle);
 	return ret;
 }
 
@@ -856,13 +858,13 @@ static void * mux_record_pthread(void * arg)
 			if(NULL != handle->cur_node)
 			{
 
-				if(is_first ==0 && 0 == video->nFrameType)
+				if(is_first ==0 && 1 == video->nFrameType)
 				{
-					is_first = 1;
-					mux_media_add_video(handle->cur_node->mux_handle,video->data,video->nEncDataLen,video->nTimeStamps,1-video->nFrameType);
-
+					video->status = 0;
+					continue;
 				}
-				
+				is_first = 1;
+				mux_media_add_video(handle->cur_node->mux_handle,video->data,video->nEncDataLen,video->nTimeStamps,1-video->nFrameType);
 
 			}
 			
@@ -899,7 +901,7 @@ static void * mux_record_pthread(void * arg)
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
 		}
 
-		if(handle->cur_node->file_size > 1024*300)
+		if(handle->cur_node->file_size > 1024*100)
 		{
 			handle->cur_node->need_exit = 1;
 			handle->cur_node = NULL;
