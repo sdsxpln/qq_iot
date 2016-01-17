@@ -13,6 +13,7 @@
 #include "common.h"
 #include "monitor_dev.h"
 #include "media_muxer_lib.h"
+#include "muxer_media.h"
 
 
 
@@ -439,6 +440,56 @@ static int mux_media_add_video(void *mux_handle, void *pbuf, unsigned long size,
 
 
 
+static char * mux_media_new_file(void)
+{
+
+	int ret = -1;
+	if(0 == mmc_get_status())
+	{
+		dbg_printf("the mmc is out ! \n");
+		return(NULL);
+	}
+	DIR *test_dir = NULL;
+	if(NULL == (test_dir=opendir(RECORD_PATH)))
+	{
+		ret = mkdir(RECORD_PATH, 0777); 
+		if(0 != ret)
+		{
+			dbg_printf("mkdir is fail ! \n");
+			goto fail;
+		}
+	}
+	else
+	{
+		closedir(test_dir);
+		test_dir = NULL;
+	}
+
+	
+	
+	unsigned int time_value = (unsigned int)time(NULL);
+	char * new_file_name = calloc(1,sizeof(char)*64);
+	if(NULL == new_file_name)
+	{
+		dbg_printf("calloc is fail ! \n");
+		return(NULL);
+	}
+	snprintf(new_file_name,63,"%s%s%d%s",RECORD_PATH,"/",time_value,".mp4");
+
+	return(new_file_name);
+	
+fail:
+
+	if(NULL != new_file_name)
+	{
+		free(new_file_name);
+		new_file_name = NULL;
+	}
+
+	return(NULL);
+
+}
+
 static int mux_push_async_data(void * data)
 {
 
@@ -569,18 +620,40 @@ static void * mux_record_pthread(void * arg)
 		{
 			if(0 == node->handle_used)
 			{
-				char buff[64]={0};
+				if(node->file_fd > 0)
+				{
+					close(node->file_fd);
+				}
+
+				if(NULL != node->file_name)
+				{
+					free(node->file_name);
+					node->file_name = NULL;
+				}
+
+				node->file_name = mux_media_new_file();
+				if(NULL == node->file_name)
+				{
+					dbg_printf("mux_media_new_file is fail!\n");
+					goto out;
+				}
+					
 				
-				snprintf(buff,64,"/mnt/hello%d.mp4",count);
-				if(node->file_fd > 0)close(node->file_fd);
-				node->file_fd = open(buff,O_RDWR | O_CREAT | O_TRUNC);
+				node->file_fd = open(node->file_name,O_RDWR | O_CREAT | O_TRUNC);
 				node->mux_handle =mux_media_handle_open(node->file_fd);
 				if(NULL == node->mux_handle)
 				{
 					dbg_printf("open fail ! \n");
-					exit(0);
+					if(NULL != node->file_name)
+					{
+						free(node->file_name);
+						node->file_name = NULL;
+					}
+					goto out;
+					
 				}
-				dbg_printf("the file name is %s \n",buff);
+				
+				dbg_printf("the file name is %s \n",node->file_name);
 				node->need_seek = 0;
 				node->offset_seek = 0;
 				node->file_size = 0;
@@ -594,7 +667,7 @@ static void * mux_record_pthread(void * arg)
 
 		}
 		
-		
+out:
 		if(RECORD_VIDEO_DATA == *(record_data_type_t*)record_data)
 		{
 			video = (video_data_t*)record_data;
@@ -644,7 +717,7 @@ static void * mux_record_pthread(void * arg)
 			pthread_mutex_unlock(&(handle->cur_node->mutex_mux_data));
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
 
-			if(handle->cur_node->file_size > 1024*1024)
+			if(handle->cur_node->file_size > 5*1024*1024)
 			{
 				handle->cur_node->need_exit = 1;
 				handle->cur_node = NULL;
