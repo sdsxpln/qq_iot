@@ -22,8 +22,7 @@
 #define 	FILE_NAME 	"muxer_media:"
 
 
-#define		SYNC_DATA_BUFF_SIZE		(32*1024)
-#define		RECORD_BACK_NUM			(2)
+#define		SYNC_DATA_BUFF_SIZE		(64*1024)
 
 
 typedef struct data_sync
@@ -71,8 +70,7 @@ typedef  struct muxer_media
 	pthread_cond_t cond_record;
 	ring_queue_t record_msg_queue;
 	volatile unsigned int record_msg_num;
-	
-	record_node_t node[RECORD_BACK_NUM];
+	record_node_t node;
 	record_node_t *cur_node;
 
 }muxer_media_t;
@@ -83,7 +81,7 @@ static muxer_media_t * muxer_media_handle = NULL;
 
 
 
-static int mux_push_async_data(int index,void * data);
+static int mux_push_async_data(void * data);
 static void muxer_media_fs_print(char* fmt, ...)
 {
 
@@ -108,7 +106,7 @@ static long muxer_media_fs_isexist(long hFile)
 
 
 
-static long muxer_media_fs0_seek(long hFile, long offset, long whence)
+static long muxer_media_fs_seek(long hFile, long offset, long whence)
 {
 
 	if(NULL == muxer_media_handle)
@@ -116,23 +114,23 @@ static long muxer_media_fs0_seek(long hFile, long offset, long whence)
 		dbg_printf("please check the handle !\n");
 		return(offset);
 	}
-	record_node_t * node = &muxer_media_handle->node[0];
+	record_node_t * node = &muxer_media_handle->node;
 	node->need_seek = 1;
 	node->offset_seek = offset;
 	return(offset);
 
 }
 
-static long muxer_media_fs0_tell(long hFile)
+static long muxer_media_fs_tell(long hFile)
 {
 
-	record_node_t * node = &muxer_media_handle->node[0];
+	record_node_t * node = &muxer_media_handle->node;
 	return(node->offset_seek);
 
 }
 
 
-static long muxer_media_fs0_write(long hFile, void* buf, long size)
+static long muxer_media_fs_write(long hFile, void* buf, long size)
 {
 
 
@@ -144,7 +142,7 @@ static long muxer_media_fs0_write(long hFile, void* buf, long size)
 		return(size);
 	}
 	
-	record_node_t * node = &muxer_media_handle->node[0];
+	record_node_t * node = &muxer_media_handle->node;
 	if(NULL == node->data)
 	{
 		node->data = calloc(1,sizeof(data_sync_t));	
@@ -181,7 +179,7 @@ static long muxer_media_fs0_write(long hFile, void* buf, long size)
 		
 		if((NULL != node->data) && (node->data->length > 0) )
 		{
-			ret = mux_push_async_data(0,node->data);
+			ret = mux_push_async_data(node->data);
 			if(0 == ret)
 			{
 				node->data = NULL;
@@ -231,7 +229,7 @@ static long muxer_media_fs0_write(long hFile, void* buf, long size)
 		memmove(ofsset_data->buff,buf,size);
 		ofsset_data->need_seek = 1;
 		ofsset_data->seek_offset= node->offset_seek;
-		ret = mux_push_async_data(0,ofsset_data);
+		ret = mux_push_async_data(ofsset_data);
 		if(0 != ret)
 		{
 
@@ -265,7 +263,7 @@ static long muxer_media_fs0_write(long hFile, void* buf, long size)
 			int size0 = SYNC_DATA_BUFF_SIZE-node->data->length;
 			memmove(node->data->buff+node->data->length,buf,size0);
 			node->data->length += size0;
-			ret = mux_push_async_data(0,node->data);
+			ret = mux_push_async_data(node->data);
 			if(0==ret)
 			{
 				node->data = NULL;
@@ -328,225 +326,7 @@ static long muxer_media_fs0_write(long hFile, void* buf, long size)
 
 
 
-static long muxer_media_fs1_seek(long hFile, long offset, long whence)
-{
-
-	if(NULL == muxer_media_handle)
-	{
-		dbg_printf("please check the handle !\n");
-		return(offset);
-	}
-	record_node_t * node = &muxer_media_handle->node[1];
-	node->need_seek = 1;
-	node->offset_seek = offset;
-	return(offset);
-
-}
-
-static long muxer_media_fs1_tell(long hFile)
-{
-	record_node_t * node = &muxer_media_handle->node[1];
-	return(node->offset_seek);
-
-}
-
-
-static long muxer_media_fs1_write(long hFile, void* buf, long size)
-{
-
-
-	int ret = -1;
-	if(NULL == muxer_media_handle)
-	{
-		dbg_printf("please check the handle !\n");
-		return(size);
-	}
-	record_node_t * node = &muxer_media_handle->node[1];
-
-	if(NULL == node->data)
-	{
-		node->data = calloc(1,sizeof(data_sync_t));	
-		if(NULL == node->data)
-		{
-			dbg_printf("calloc is fail ! \n");
-			node->offset_seek += size;
-			return(size);
-		}
-		node->data->fd = hFile;
-		node->data->need_seek = 0;
-		node->data->seek_offset = 0;
-		node->data->length = 0;
-		node->data->buff = calloc(1,sizeof(unsigned char)*SYNC_DATA_BUFF_SIZE+1);
-		if(NULL == node->data->buff)
-		{
-			dbg_printf("calloc is fail ! \n");
-			if(NULL != node->data)
-			{
-				free(node->data);
-				node->data==NULL;
-			}
-			node->offset_seek += size;
-			return(size);
-		}
-		
-	}
-
-	
-
-	if(1 == node->need_seek)
-	{
-		node->need_seek = 0;
-		
-		if((NULL != node->data) && (node->data->length > 0) )
-		{
-			ret = mux_push_async_data(1,node->data);
-			if(0 == ret)
-			{
-				node->data = NULL;
-			}
-			else
-			{
-				dbg_printf("push fail !\n");
-				if(NULL != node->data->buff)
-				{
-					free(node->data->buff);
-					node->data->buff = NULL;
-				}
-
-				if(NULL != node->data)
-				{
-					free(node->data);
-					node->data = NULL;
-				}
-			}	
-		}
-
-		
-		data_sync_t * ofsset_data = NULL;
-		ofsset_data = calloc(1,sizeof(data_sync_t));
-		if(NULL == ofsset_data)
-		{
-			dbg_printf("calloc is fail ! \n");
-			node->offset_seek += size;
-			return(size);
-		}
-		
-		ofsset_data->fd = hFile;
-		ofsset_data->length = size;
-		ofsset_data->buff = calloc(1,sizeof(unsigned char)*size+1);
-		if(NULL == ofsset_data->buff)
-		{
-			dbg_printf("calloc is fail ! \n");
-			if(NULL != ofsset_data)
-			{
-				free(ofsset_data);
-				ofsset_data==NULL;
-			}
-			node->offset_seek += size;
-			return(size);
-		}
-		
-		memmove(ofsset_data->buff,buf,size);
-		ofsset_data->need_seek = 1;
-		ofsset_data->seek_offset= node->offset_seek;
-		ret = mux_push_async_data(1,ofsset_data);
-		if(0 != ret)
-		{
-
-			if(NULL != ofsset_data->buff)
-			{
-				free(ofsset_data->buff);
-				ofsset_data->buff = NULL;
-			}
-
-			if(NULL != ofsset_data)
-			{
-				free(ofsset_data);
-				ofsset_data = NULL;	
-			}
-
-		}
-
-		ofsset_data = NULL;
-		
-
-	}
-	else
-	{
-		if(node->data->length+size < SYNC_DATA_BUFF_SIZE)
-		{
-			memmove(node->data->buff+node->data->length,buf,size);
-			node->data->length += size;
-		}
-		else
-		{
-			int size0 = SYNC_DATA_BUFF_SIZE-node->data->length;
-			memmove(node->data->buff+node->data->length,buf,size0);
-			node->data->length += size0;
-			ret = mux_push_async_data(1,node->data);
-			if(0==ret)
-			{
-				node->data = NULL;
-			}
-			else
-			{
-				dbg_printf("pus fail !\n");
-				if(NULL != node->data->buff)
-				{
-					free(node->data->buff);
-					node->data->buff = NULL;
-				}
-
-				if(NULL != node->data)
-				{
-					free(node->data);
-					node->data = NULL;
-				}
-				
-			}
-			
-
-			int size1 = size-size0;
-			node->data = calloc(1,sizeof(data_sync_t));	
-			if(NULL == node->data)
-			{
-				dbg_printf("calloc is fail !\n");
-				node->offset_seek += size;
-				return(size);
-			}
-			node->data->fd = hFile;
-			node->data->length = 0;
-			node->data->need_seek = 0;
-			node->data->buff = calloc(1,sizeof(unsigned char)*SYNC_DATA_BUFF_SIZE+1);
-			if(NULL == node->data->buff)
-			{
-				dbg_printf("calloc is fail!\n");
-				if(NULL != node->data)
-				{
-					free(node->data);
-					node->data = NULL;
-				}
-				node->offset_seek += size;
-				return(size);
-				
-			}
-			memmove(node->data->buff+node->data->length,buf+size0,size1);
-			node->data->length += size1;
-
-		}
-
-
-	}
-
-	node->offset_seek += size;
-	return(size);
-
-
-}
-
-
-
-static void* mux_media_handle_open(int file_fd, int index)
+static void* mux_media_handle_open(int file_fd)
 {
 
     T_MEDIALIB_MUX_OPEN_INPUT mux_open_input;
@@ -589,18 +369,10 @@ static void* mux_media_handle_open(int file_fd, int index)
     mux_open_input.m_CBFunc.m_FunRead= (MEDIALIB_CALLBACK_FUN_READ)muxer_media_fs_read;
     mux_open_input.m_CBFunc.m_FunFileHandleExist = muxer_media_fs_isexist;
 
-	if(0 == index)
-	{
-	    mux_open_input.m_CBFunc.m_FunSeek= (MEDIALIB_CALLBACK_FUN_SEEK)muxer_media_fs0_seek;
-	    mux_open_input.m_CBFunc.m_FunTell = (MEDIALIB_CALLBACK_FUN_TELL)muxer_media_fs0_tell;
-	    mux_open_input.m_CBFunc.m_FunWrite = (MEDIALIB_CALLBACK_FUN_WRITE)muxer_media_fs0_write;
-	}
-	else
-	{
-	    mux_open_input.m_CBFunc.m_FunSeek= (MEDIALIB_CALLBACK_FUN_SEEK)muxer_media_fs1_seek;
-	    mux_open_input.m_CBFunc.m_FunTell = (MEDIALIB_CALLBACK_FUN_TELL)muxer_media_fs1_tell;
-	    mux_open_input.m_CBFunc.m_FunWrite = (MEDIALIB_CALLBACK_FUN_WRITE)muxer_media_fs1_write;
-	}
+
+    mux_open_input.m_CBFunc.m_FunSeek= (MEDIALIB_CALLBACK_FUN_SEEK)muxer_media_fs_seek;
+    mux_open_input.m_CBFunc.m_FunTell = (MEDIALIB_CALLBACK_FUN_TELL)muxer_media_fs_tell;
+    mux_open_input.m_CBFunc.m_FunWrite = (MEDIALIB_CALLBACK_FUN_WRITE)muxer_media_fs_write;
 
     new_handle = MediaLib_Mux_Open(&mux_open_input, &mux_open_output);
 	if(AK_NULL == new_handle)
@@ -643,7 +415,6 @@ static int mux_media_add_audio(void *mux_handle, void *pbuf, unsigned long size,
 		dbg_printf("MediaLib_Mux_AddAudioData is fail!\n");
 		return(-1);
 	}
-//	MediaLib_Mux_Handle(mux_handle);
     return 0;
 }
 
@@ -663,13 +434,12 @@ static int mux_media_add_video(void *mux_handle, void *pbuf, unsigned long size,
 		dbg_printf("MediaLib_Mux_AddVideoData add fail!\n");
 		return(-1);
 	}
-//	MediaLib_Mux_Handle(mux_handle);
 	return ret;
 }
 
 
 
-static int mux_push_async_data(int index,void * data)
+static int mux_push_async_data(void * data)
 {
 
 	int ret = 1;
@@ -679,11 +449,6 @@ static int mux_push_async_data(int index,void * data)
 		dbg_printf("the mmc is out !\n");
 		return(-1);
 	}
-	if((0 != index) && (1 != index) )
-	{
-		dbg_printf("check the index !\n");
-		return(-1);
-	}
 	muxer_media_t * handle = (muxer_media_t*)muxer_media_handle;
 	if(NULL == handle || NULL== data)
 	{
@@ -691,7 +456,7 @@ static int mux_push_async_data(int index,void * data)
 		return(-1);
 	}
 
-	record_node_t * node = &muxer_media_handle->node[index];
+	record_node_t * node = &muxer_media_handle->node;
 	pthread_mutex_lock(&(node->mutex_write_data));
 	for (i = 0; i < 1000; i++)
 	{
@@ -783,9 +548,9 @@ static void * mux_record_pthread(void * arg)
 	void *	record_data = NULL;
 	video_data_t * video = NULL;
 	voice_data_t * voice = NULL;
-	record_node_t * node0 = &handle->node[0];
-	record_node_t * node1 = &handle->node[1];
+	record_node_t * node = &handle->node;
 	static int is_first = 0;
+	int count = 0;
 	while(is_run)
 	{
 
@@ -802,51 +567,30 @@ static void * mux_record_pthread(void * arg)
 
 		if(NULL == handle->cur_node )
 		{
-			if(0 == node0->handle_used)
+			if(0 == node->handle_used)
 			{
-				node0->file_fd = open("/mnt/hello0.mp4",O_RDWR | O_CREAT | O_TRUNC);
-				node0->mux_handle =mux_media_handle_open(node0->file_fd ,0);
-				if(NULL == node0->mux_handle)
+				char buff[64]={0};
+				
+				snprintf(buff,64,"/mnt/hello%d.mp4",count);
+				if(node->file_fd > 0)close(node->file_fd);
+				node->file_fd = open(buff,O_RDWR | O_CREAT | O_TRUNC);
+				node->mux_handle =mux_media_handle_open(node->file_fd);
+				if(NULL == node->mux_handle)
 				{
 					dbg_printf("open fail ! \n");
 					exit(0);
 				}
-
-				node0->need_seek = 0;
-				node0->offset_seek = 0;
-				node0->file_size = 0;
-				node0->need_exit = 0;
-				node0->handle_used = 1;
-				node0->data = NULL;
-				handle->cur_node = node0;
+				dbg_printf("the file name is %s \n",buff);
+				node->need_seek = 0;
+				node->offset_seek = 0;
+				node->file_size = 0;
+				node->need_exit = 0;
+				node->handle_used = 1;
+				node->data = NULL;
+				handle->cur_node = node;
 				is_first = 0;
 				
 			}
-			else if(0 == node1->handle_used)
-			{
-				node1->file_fd = open("/mnt/hello1.mp4",O_RDWR | O_CREAT | O_TRUNC);
-				node1->mux_handle =mux_media_handle_open(node1->file_fd ,1);
-				if(NULL == node1->mux_handle)
-				{
-					dbg_printf("open fail ! \n");
-					exit(0);
-				}
-				node1->need_seek = 0;
-				node1->offset_seek = 0;
-				node1->file_size = 0;
-				node1->need_exit = 0;
-				node1->handle_used = 1;
-				node1->data = NULL;
-				handle->cur_node = node1;
-				is_first = 0;
-			}
-			else
-			{
-				dbg_printf("cant not find the handle ! \n");
-				exit(0);
-			}
-
-
 
 		}
 		
@@ -899,14 +643,17 @@ static void * mux_record_pthread(void * arg)
 			fetch_and_add(task_num, 1);
 			pthread_mutex_unlock(&(handle->cur_node->mutex_mux_data));
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
+
+			if(handle->cur_node->file_size > 1024*1024)
+			{
+				handle->cur_node->need_exit = 1;
+				handle->cur_node = NULL;
+				count += 1;
+				
+			}
 		}
 
-		if(handle->cur_node->file_size > 1024*100)
-		{
-			handle->cur_node->need_exit = 1;
-			handle->cur_node = NULL;
-			
-		}
+
 
 	}
 
@@ -915,7 +662,7 @@ static void * mux_record_pthread(void * arg)
 }
 
 
-static void * mux_async_pthread0(void * arg)
+static void * mux_async_pthread(void * arg)
 {
 	if(NULL == arg)
 	{
@@ -924,7 +671,7 @@ static void * mux_async_pthread0(void * arg)
 	}
 	
 	muxer_media_t * handle = (muxer_media_t*)arg;
-	record_node_t * node = &handle->node[0];
+	record_node_t * node = &handle->node;
 	int ret = -1;
 	int is_run = 1;
 	int write_length = 0;
@@ -938,26 +685,18 @@ static void * mux_async_pthread0(void * arg)
             pthread_cond_wait(&(node->cond_mux_data), &(node->mutex_mux_data));
         }
 		pthread_mutex_unlock(&(node->mutex_mux_data));
+		volatile unsigned int * task_num = &(node->msg_num_mux_data);
+		fetch_and_sub(task_num, 1);
 
-		MediaLib_Mux_Handle(node->mux_handle);
+		if(NULL != node->mux_handle)
+		{
+			MediaLib_Mux_Handle(node->mux_handle);
+		}
+		
 			
 		if(0 == node->need_exit)
 		{
-			volatile unsigned int * task_num = &(node->msg_num_mux_data);
-			fetch_and_sub(task_num, 1); 
-		}
-		else
-		{
-			node->need_exit = 1;
-			node->msg_num_mux_data = 0;
-			//node->handle_used = 0;
-			MediaLib_Mux_Stop(node->mux_handle);
-	    	MediaLib_Mux_Close(node->mux_handle);
-			node->mux_handle = NULL;
-		}
 
-		while(1)
-		{
 			ret = -1;
 	        pthread_mutex_lock(&(node->mutex_write_data));
 	        if(node->msg_num_write_data > 0 )
@@ -965,11 +704,11 @@ static void * mux_async_pthread0(void * arg)
 				ret = ring_queue_pop(&(node->msg_queue_write_data), (void **)&async_data);
 	        }
 			pthread_mutex_unlock(&(node->mutex_write_data));
-			if(ret != 0)break;
+			if(ret != 0)continue;
 
 			volatile unsigned int * num = &(node->msg_num_write_data);
 			fetch_and_sub(num, 1); 
-			if(NULL == async_data)break;
+			if(NULL == async_data)continue;
 			
 			if(async_data->need_seek==1)
 			{
@@ -990,100 +729,79 @@ static void * mux_async_pthread0(void * arg)
 			}
 
 		}
-	
-
-	}
-
-	return(NULL);
-
-}
-
-
-
-static void * mux_async_pthread1(void * arg)
-{
-	if(NULL == arg)
-	{
-		dbg_printf("please check the param ! \n");
-		return(NULL);
-	}
-	
-	muxer_media_t * handle = (muxer_media_t*)arg;
-	record_node_t * node = &handle->node[1];
-	int ret = -1;
-	int is_run = 1;
-	int write_length = 0;
-	data_sync_t *	async_data = NULL;
-	while(is_run)
-	{
-
-        pthread_mutex_lock(&(node->mutex_mux_data));
-        while ((0 == node->msg_num_mux_data) && (0 == node->need_exit))
-        {
-            pthread_cond_wait(&(node->cond_mux_data), &(node->mutex_mux_data));
-        }
-		pthread_mutex_unlock(&(node->mutex_mux_data));
-
-		MediaLib_Mux_Handle(node->mux_handle);
-			
-		if(0 == node->need_exit)
-		{
-			volatile unsigned int * task_num = &(node->msg_num_mux_data);
-			fetch_and_sub(task_num, 1); 
-		}
 		else
 		{
-			node->need_exit = 1;
-			node->msg_num_mux_data = 0;
-			//node->handle_used = 0;
+
+			MediaLib_Mux_Handle(node->mux_handle);
 			MediaLib_Mux_Stop(node->mux_handle);
-	    	MediaLib_Mux_Close(node->mux_handle);
+			MediaLib_Mux_Close(node->mux_handle);
+			while(1)
+			{
+				ret = -1;
+		        pthread_mutex_lock(&(node->mutex_write_data));
+		        if(node->msg_num_write_data > 0 )
+		        {
+					ret = ring_queue_pop(&(node->msg_queue_write_data), (void **)&async_data);
+		        }
+				pthread_mutex_unlock(&(node->mutex_write_data));
+				if(ret != 0 && NULL==async_data)break;
+				volatile unsigned int * num = &(node->msg_num_write_data);
+				fetch_and_sub(num, 1); 
+
+				if(NULL == async_data)continue;
+				
+				if(async_data->need_seek==1)
+				{
+					lseek64(async_data->fd, async_data->seek_offset, 0)	;
+				}
+				write_length = write(async_data->fd,async_data->buff,async_data->length);
+				dbg_printf("write_length===%d\n",write_length);
+				node->file_size += write_length;
+				if(NULL != async_data->buff)
+				{
+					free(async_data->buff);
+					async_data->buff = NULL;
+				}
+				if(NULL != async_data)
+				{
+					free(async_data);
+					async_data = NULL;
+				}
+
+
+			}
+
+
+			dbg_printf("node->msg_num_write_data===%d\n",node->msg_num_write_data);
 			node->mux_handle = NULL;
-		}
-
-		while(1)
-		{
-			ret = -1;
-	        pthread_mutex_lock(&(node->mutex_write_data));
-	        if(node->msg_num_write_data > 0 )
-	        {
-				ret = ring_queue_pop(&(node->msg_queue_write_data), (void **)&async_data);
-	        }
-			pthread_mutex_unlock(&(node->mutex_write_data));
-			if(ret != 0)break;
-
-			volatile unsigned int * num = &(node->msg_num_write_data);
-			fetch_and_sub(num, 1); 
-			if(NULL == async_data)break;
+			node->msg_num_mux_data = 0;
 			
-			if(async_data->need_seek==1)
-			{
-				lseek64(async_data->fd, async_data->seek_offset, 0)	;
-			}
-			write_length = write(async_data->fd,async_data->buff,async_data->length);
-			dbg_printf("write_length===%d\n",write_length);
-			node->file_size += write_length;
-			if(NULL != async_data->buff)
-			{
-				free(async_data->buff);
-				async_data->buff = NULL;
-			}
-			if(NULL != async_data)
-			{
-				free(async_data);
-				async_data = NULL;
-			}
+			
+			node->need_seek = 0;
+			node->offset_seek = 0;
+			node->need_exit = 0;
 
+
+			if(NULL != node->data)
+			{
+				if(NULL != node->data->buff)
+				{
+					free(node->data->buff);
+					node->data->buff = NULL;
+				}
+				free(node->data);
+				node->data = NULL;
+			}
+			node->handle_used = 0;
+
+			dbg_printf("i will exit it 0 !\n");
 		}
-	
 
 	}
 
 	return(NULL);
 
 }
-
-
 
 
 
@@ -1116,48 +834,41 @@ int muxer_media_handle_up(void)
     pthread_cond_init(&(muxer_media_handle->cond_record), NULL);
 	muxer_media_handle->record_msg_num = 0;
 
-	for(i=0;i<RECORD_BACK_NUM;++i)
+
+
+	record_node_t * node = &muxer_media_handle->node;
+	bzero(node,sizeof(*node));
+
+	node->file_name = NULL;
+	node->file_size = 0;
+	node->data = NULL;
+	node->need_exit = 0;
+	node->mux_handle = NULL;
+	node->handle_used = 0;
+	
+	pthread_mutex_init(&(node->mutex_mux_data), NULL);
+	pthread_cond_init(&(node->cond_mux_data), NULL);
+	node->msg_num_mux_data = 0;
+	
+	pthread_mutex_init(&(node->mutex_write_data), NULL);
+	ret = ring_queue_init(&node->msg_queue_write_data, 1024);
+	if(ret < 0 )
 	{
-		record_node_t * node = &muxer_media_handle->node[i];
-		bzero(node,sizeof(*node));
-
-		node->file_name = NULL;
-		node->file_size = 0;
-		node->data = NULL;
-		node->need_exit = 0;
-		node->mux_handle = NULL;
-		node->handle_used = 0;
-		
-		pthread_mutex_init(&(node->mutex_mux_data), NULL);
-		pthread_cond_init(&(node->cond_mux_data), NULL);
-		node->msg_num_mux_data = 0;
-		
-		pthread_mutex_init(&(node->mutex_write_data), NULL);
-		ret = ring_queue_init(&node->msg_queue_write_data, 1024);
-		if(ret < 0 )
-		{
-			dbg_printf("ring_queue_init  fail \n");
-		}
-		node->msg_num_write_data = 0;
-
-
+		dbg_printf("ring_queue_init  fail \n");
 	}
+	node->msg_num_write_data = 0;
+
+
+
 
 	muxer_media_handle->cur_node = NULL;
 
-	pthread_t async_pthid0;
-	ret = pthread_create(&async_pthid0,NULL,mux_async_pthread0,muxer_media_handle);
-	pthread_detach(async_pthid0);
-
-	pthread_t async_pthid1;
-	ret = pthread_create(&async_pthid1,NULL,mux_async_pthread1,muxer_media_handle);
-	pthread_detach(async_pthid1);
-	
-	sleep(1);
+	pthread_t async_pthid;
+	ret = pthread_create(&async_pthid,NULL,mux_async_pthread,muxer_media_handle);
+	pthread_detach(async_pthid);
 	pthread_t record_pthid;
 	ret = pthread_create(&record_pthid,NULL,mux_record_pthread,muxer_media_handle);
 	pthread_detach(record_pthid);
-
 
 	return(0);
 	
