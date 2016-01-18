@@ -11,6 +11,7 @@
 #include "msg_handle.h"
 #include "talk_handle.h"
 #include "video_record.h"
+#include "demuxer_media.h"
 
 
 
@@ -252,7 +253,8 @@ static void  qq_fetch_history_video(unsigned int last_time, int max_count, int *
 
 
 //	replay_fetch_history_video(last_time,max_count,count,range_list);
-	record_fetch_history(last_time,max_count,count,range_list);
+//	record_fetch_history(last_time,max_count,count,range_list);
+	demuxer_media_fetch_history(last_time,max_count,count,range_list);
 	dbg_printf("count====%d\n",*count);
 
 }

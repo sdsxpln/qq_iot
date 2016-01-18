@@ -12,6 +12,7 @@ LOCAL_SRC_CFILES := \
 	$(LOCAL_SRC)/dev_camera.c  \
 	$(LOCAL_SRC)/video_stream.c  \
 	$(LOCAL_SRC)/muxer_media.c  \
+	$(LOCAL_SRC)/demuxer_media.c  \
 	$(LOCAL_SRC)/pcm_dev.c  \
 	$(LOCAL_SRC)/amr_decode.c  \
 	$(LOCAL_SRC)/amr_encode.c  \

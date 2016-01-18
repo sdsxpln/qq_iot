@@ -14,6 +14,7 @@
 #include "monitor_dev.h"
 #include "fs_managed.h"
 #include "muxer_media.h"
+#include "demuxer_media.h"
 
 
 
@@ -150,6 +151,7 @@ int system_up(void)
 
 	#if 1
 	muxer_media_handle_up();
+	demuxer_media_handle_up();
 	#else
 	record_handle_center_up();
 	#endif

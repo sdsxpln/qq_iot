@@ -13,7 +13,9 @@
 #include "common.h"
 #include "monitor_dev.h"
 #include "media_muxer_lib.h"
+#include "demuxer_media.h"
 #include "muxer_media.h"
+
 
 
 
@@ -45,6 +47,8 @@ typedef  struct record_node
 	long offset_seek;
 	long file_size;
 	char * file_name;
+	unsigned long start_time;
+	unsigned long end_time;
 	int need_exit;
 	void *mux_handle;
 	int handle_used;
@@ -440,13 +444,19 @@ static int mux_media_add_video(void *mux_handle, void *pbuf, unsigned long size,
 
 
 
-static char * mux_media_new_file(void)
+static char * mux_media_new_file(record_node_t * dest_node)
 {
 
 	int ret = -1;
 	if(0 == mmc_get_status())
 	{
 		dbg_printf("the mmc is out ! \n");
+		return(NULL);
+	}
+
+	if(NULL == dest_node)
+	{
+		dbg_printf("please check the param! \n");
 		return(NULL);
 	}
 	DIR *test_dir = NULL;
@@ -468,13 +478,14 @@ static char * mux_media_new_file(void)
 	
 	
 	unsigned int time_value = (unsigned int)time(NULL);
+	dest_node->start_time = time_value;
 	char * new_file_name = calloc(1,sizeof(char)*64);
 	if(NULL == new_file_name)
 	{
 		dbg_printf("calloc is fail ! \n");
 		return(NULL);
 	}
-	snprintf(new_file_name,63,"%s%s%d%s",RECORD_PATH,"/",time_value,".mp4");
+	snprintf(new_file_name,63,"%s%s%d%s",RECORD_PATH,"/",time_value,RECORD_TMP_FLAG);
 
 	return(new_file_name);
 	
@@ -620,24 +631,21 @@ static void * mux_record_pthread(void * arg)
 		{
 			if(0 == node->handle_used)
 			{
-				if(node->file_fd > 0)
-				{
-					close(node->file_fd);
-				}
-
+	
+				
 				if(NULL != node->file_name)
 				{
 					free(node->file_name);
 					node->file_name = NULL;
 				}
-
-				node->file_name = mux_media_new_file();
+				node->file_name = mux_media_new_file(node);
 				if(NULL == node->file_name)
 				{
 					dbg_printf("mux_media_new_file is fail!\n");
 					goto out;
 				}
 					
+
 				
 				node->file_fd = open(node->file_name,O_RDWR | O_CREAT | O_TRUNC);
 				node->mux_handle =mux_media_handle_open(node->file_fd);
@@ -652,7 +660,10 @@ static void * mux_record_pthread(void * arg)
 					goto out;
 					
 				}
-				
+
+				demuxer_init_cur_file();
+				demuxer_set_cur_file_name(node->file_name);
+				demuxer_set_cur_start_time(node->start_time);
 				dbg_printf("the file name is %s \n",node->file_name);
 				node->need_seek = 0;
 				node->offset_seek = 0;
@@ -717,7 +728,7 @@ out:
 			pthread_mutex_unlock(&(handle->cur_node->mutex_mux_data));
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
 
-			if(handle->cur_node->file_size > 5*1024*1024)
+			if(handle->cur_node->file_size > 30*1024*1024)
 			{
 				handle->cur_node->need_exit = 1;
 				handle->cur_node = NULL;
@@ -725,8 +736,6 @@ out:
 				
 			}
 		}
-
-
 
 	}
 
@@ -800,6 +809,8 @@ static void * mux_async_pthread(void * arg)
 				free(async_data);
 				async_data = NULL;
 			}
+			node->end_time = (unsigned int)time(NULL);
+			demuxer_set_cur_end_time(node->end_time);
 
 		}
 		else
@@ -848,8 +859,7 @@ static void * mux_async_pthread(void * arg)
 			dbg_printf("node->msg_num_write_data===%d\n",node->msg_num_write_data);
 			node->mux_handle = NULL;
 			node->msg_num_mux_data = 0;
-			
-			
+		
 			node->need_seek = 0;
 			node->offset_seek = 0;
 			node->need_exit = 0;
@@ -865,6 +875,34 @@ static void * mux_async_pthread(void * arg)
 				free(node->data);
 				node->data = NULL;
 			}
+
+			if(node->file_fd > 0)
+			{
+				close(node->file_fd);
+				node->file_fd = -1;
+			}
+			
+			node->end_time = (unsigned int)time(NULL);
+
+			char * p = strstr(node->file_name,RECORD_TMP_FLAG);
+			if(NULL != p)
+			{
+				char new_name[128] = {0};
+				char file_name[32] = {0};
+				memmove(file_name,node->file_name,p-node->file_name);
+				snprintf(new_name,127,"%s%s%d%s",file_name,"_",node->end_time,RECORD_MP4_FLAG);
+				ret = rename(node->file_name,new_name);
+				if(0 != ret)
+				{
+					dbg_printf("rename is fail ! \n");
+				}
+				else
+				{
+					demuxer_media_add_history(new_name,node->start_time,node->end_time);
+					dbg_printf("the new name  is %s\n",new_name);
+				}
+			}
+
 			node->handle_used = 0;
 
 			dbg_printf("i will exit it 0 !\n");
