@@ -157,7 +157,7 @@ int system_up(void)
 	#endif
 	sleep(2);
 	video_record_video_start();
-	voice_record_voice_start();
+	//voice_record_voice_start();
 
 	
 

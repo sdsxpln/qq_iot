@@ -269,13 +269,15 @@ static  void qq_play_history_video(unsigned int play_time, unsigned long long ba
 	
 	if(0 == play_time)
 	{
-		record_replay_send_stop();
+		//record_replay_send_stop();
+		demuxer_replay_send_stop();
 		video_send_video_start();
 		voice_send_net_start();
 	}
 	else
 	{
-		record_push_replay_video_data(play_time,base_time);
+		//record_push_replay_video_data(play_time,base_time);
+		demuxer_push_replay_info(play_time,base_time);
 	}
 	
 

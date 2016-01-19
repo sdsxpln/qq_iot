@@ -61,7 +61,7 @@ typedef enum
 }record_data_type_t;
 
 
-#define  FRAME_FPS_NUM		(30)
+#define  FRAME_FPS_NUM		(25)
 #define  FRAME_GAP_NUM		(60)
 #define	 FRAME_BIT_RATE	 	(500)
 

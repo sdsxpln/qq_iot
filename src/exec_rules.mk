@@ -20,10 +20,7 @@ endif
 ifdef USE_CPP
 CXXFLAGS	:= $(LOCAL_CFLAGS) $(addprefix -I,$(LOCAL_C_INCLUDES)) -Wall -D_GNU_SOURCE -fms-extensions -g -rdynamic
 endif
-#CFLAGS		:= $(LOCAL_CFLAGS) $(addprefix -I,$(LOCAL_C_INCLUDES)) -Wall -D_GNU_SOURCE -std=c99 -fms-extensions -lrt -g -rdynamic
-#LDFLAGS		:= $(LOCAL_LDFLAGS) $(addprefix -l,$(patsubst lib%,%,$(LOCAL_SHARED_LIBRARIES))) -lrt  -Wl,-rpath=/mnt -g -rdynamic
-
-CFLAGS		:= $(LOCAL_CFLAGS) $(addprefix -I,$(LOCAL_C_INCLUDES)) -Wall -D_GNU_SOURCE -std=c99 -fms-extensions  -rdynamic
+CFLAGS		:= $(LOCAL_CFLAGS) $(addprefix -I,$(LOCAL_C_INCLUDES)) -Wall -D_GNU_SOURCE -std=c99 -fms-extensions -lrt  -rdynamic
 LDFLAGS		:= $(LOCAL_LDFLAGS) $(addprefix -l,$(patsubst lib%,%,$(LOCAL_SHARED_LIBRARIES)))
 
 ifdef USE_CPP

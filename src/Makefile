@@ -35,7 +35,7 @@ LOCAL_CFLAGS :=
 PREFIX := arm-none-linux-gnueabi-
 
 #链接时指定的libs所在目录
-LOCAL_SHARED_LIBRARIES :=  akuio akmedialib akaudiocodec akaudiofilter akstreamenclib txdevicesdk  rt
+LOCAL_SHARED_LIBRARIES :=  akuio akmedialib akaudiocodec akaudiofilter akstreamenclib txdevicesdk  rt  
 
 #编译时指定的要使用的外部头文件目录
 LOCAL_C_INCLUDES :=  ./ \

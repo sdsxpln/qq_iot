@@ -980,8 +980,7 @@ static void * record_replay_video_pthread(void * arg)
 			if(RECORD_VIDEO_DATA == data_head.check_flag)
 			{
 				fread((void*)&data_send,1,data_head.total_size,cur_file);
-				time_offset = data_send.nTimeStamps-pre_time_stamps;
-				pre_time_stamps = data_send.nTimeStamps;
+
 
 				if(time_offset>0)
 				{

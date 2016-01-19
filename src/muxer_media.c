@@ -357,7 +357,7 @@ static void* mux_media_handle_open(int file_fd)
     mux_open_input.m_eVideoType     = MEDIALIB_VIDEO_H264;
     mux_open_input.m_nWidth         = 1280;
     mux_open_input.m_nHeight        = 720;
-    mux_open_input.m_nFPS           = FRAME_FPS_NUM + 1;
+    mux_open_input.m_nFPS           = FRAME_FPS_NUM;
     mux_open_input.m_nKeyframeInterval  = FRAME_GAP_NUM-1;
     
     // set audio open info
@@ -420,6 +420,7 @@ static int mux_media_add_audio(void *mux_handle, void *pbuf, unsigned long size,
 		dbg_printf("MediaLib_Mux_AddAudioData is fail!\n");
 		return(-1);
 	}
+
     return 0;
 }
 
@@ -728,7 +729,7 @@ out:
 			pthread_mutex_unlock(&(handle->cur_node->mutex_mux_data));
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
 
-			if(handle->cur_node->file_size > 30*1024*1024)
+			if(handle->cur_node->file_size > 100*1024*1024)
 			{
 				handle->cur_node->need_exit = 1;
 				handle->cur_node = NULL;
@@ -797,7 +798,7 @@ static void * mux_async_pthread(void * arg)
 				lseek64(async_data->fd, async_data->seek_offset, 0)	;
 			}
 			write_length = write(async_data->fd,async_data->buff,async_data->length);
-			dbg_printf("write_length===%d\n",write_length);
+		//	dbg_printf("write_length===%d\n",write_length);
 			node->file_size += write_length;
 			if(NULL != async_data->buff)
 			{
@@ -839,7 +840,7 @@ static void * mux_async_pthread(void * arg)
 					lseek64(async_data->fd, async_data->seek_offset, 0)	;
 				}
 				write_length = write(async_data->fd,async_data->buff,async_data->length);
-				dbg_printf("write_length===%d\n",write_length);
+				//dbg_printf("write_length===%d\n",write_length);
 				node->file_size += write_length;
 				if(NULL != async_data->buff)
 				{
