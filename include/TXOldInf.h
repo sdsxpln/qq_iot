@@ -8,33 +8,33 @@ CXX_EXTERN_BEGIN
 
 /////////////////////////////////////////////////////////////////////////
 //
-//  ÏòÊÖ»úQQ·¢ËÍCC datapointÏûÏ¢£¬ÔçÆÚ½Ó¿Ú£¬ÓÉÓÚÃ»ÓĞºÜºÃµÄ½â¾ö¶à¸ö°ó¶¨ÕßµÄÎÊÌâ£¬ºóĞø»áÖğ²½ÆúÓÃ
+//  å‘æ‰‹æœºQQå‘é€CC datapointæ¶ˆæ¯ï¼Œæ—©æœŸæ¥å£ï¼Œç”±äºæ²¡æœ‰å¾ˆå¥½çš„è§£å†³å¤šä¸ªç»‘å®šè€…çš„é—®é¢˜ï¼Œåç»­ä¼šé€æ­¥å¼ƒç”¨
 //
 ////////////////////////////////////////////////////////////////////////
 
-//ÏûÏ¢ ½ÓÊÕ·½/·¢ËÍ·½ ĞÅÏ¢
+//æ¶ˆæ¯ æ¥æ”¶æ–¹/å‘é€æ–¹ ä¿¡æ¯
 typedef struct tag_tx_ccmsg_inst_info
 {
     unsigned long long          target_id;          // ccmsg target id for send to / from
     unsigned int                appid;
     unsigned int                instid;
-    unsigned int                platform;           // Ö¸¶¨Æ½Ì¨
-    unsigned int                open_appid;         // ¿ªÆ½·ÖÅä¸øµÚÈı·½appµÄappid
+    unsigned int                platform;           // æŒ‡å®šå¹³å°
+    unsigned int                open_appid;         // å¼€å¹³åˆ†é…ç»™ç¬¬ä¸‰æ–¹appçš„appid
     unsigned int                productid;          //
-    unsigned int                sso_bid;            // SSOÖÕ¶Ë¹ÜÀí·ÖÅäµÄappid
-    char *                      guid;               // Éè±¸µÄÎ¨Ò»±êÊ¶
+    unsigned int                sso_bid;            // SSOç»ˆç«¯ç®¡ç†åˆ†é…çš„appid
+    char *                      guid;               // è®¾å¤‡çš„å”¯ä¸€æ ‡è¯†
     int                         guid_len;
 }tx_ccmsg_inst_info;
 
 
-// ·¢ËÍC2C datapointÊı¾İ
+// å‘é€C2C datapointæ•°æ®
 typedef void (*on_send_cc_data_point_ret)(unsigned int cookie, unsigned long long to_client, int err_code);
 /**
-* ½Ó¿ÚËµÃ÷£º·¢ËÍClient to Client data point ÏûÏ¢
+* æ¥å£è¯´æ˜ï¼šå‘é€Client to Client data point æ¶ˆæ¯
 */
 SDK_API int tx_send_cc_data_point(unsigned long long to_client, unsigned int id, char * value, unsigned int * cookie, on_send_cc_data_point_ret ret_callback);
 /**
-* ½Ó¿ÚËµÃ÷£º·¢ËÍClient to Client data point ÏûÏ¢
+* æ¥å£è¯´æ˜ï¼šå‘é€Client to Client data point æ¶ˆæ¯
 */
 SDK_API int tx_send_cc_data_points(unsigned long long to_client, tx_data_point * data_points, int data_points_count, unsigned int * cookie, on_send_cc_data_point_ret ret_callback);
 

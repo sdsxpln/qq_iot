@@ -8,38 +8,38 @@ CXX_EXTERN_BEGIN
 enum tx_barrage_msg_element_type
 {
     element_none            = 0,
-    element_text            = 1,        // ÎÄ±¾ÏûÏ¢
-    element_face            = 2,        // ±íÇé
-    element_image           = 3,        // Í¼Æ¬
-    element_audio           = 4,        // ÓïÒôÏûÏ¢
+    element_text            = 1,        // æ–‡æœ¬æ¶ˆæ¯
+    element_face            = 2,        // è¡¨æƒ…
+    element_image           = 3,        // å›¾ç‰‡
+    element_audio           = 4,        // è¯­éŸ³æ¶ˆæ¯
 };
 
-// ÎÄ±¾ÏûÏ¢
+// æ–‡æœ¬æ¶ˆæ¯
 typedef struct tag_tx_text_msg_element
 {
-    char *              msg_text;       // '\0'½áÎ²µÄ×Ö·û´®
+    char *              msg_text;       // '\0'ç»“å°¾çš„å­—ç¬¦ä¸²
 }tx_text_msg_element;
 
-// ±íÇéÏûÏ¢
+// è¡¨æƒ…æ¶ˆæ¯
 typedef struct tag_tx_face_msg_element
 {
     unsigned int        face_index;
 }tx_face_msg_element;
 
-// Í¼Æ¬
+// å›¾ç‰‡
 typedef struct tag_tx_image_msg_element
 {
     char *              image_guid;
     int                 guid_length;
-    char *              image_url;      // Ô­Í¼ÏÂÔØµØÖ· '\0'½áÎ²µÄ×Ö·û´®
-    char *              image_thumb_url;// ËõÂÔÍ¼ÏÂÔØµØÖ· '\0'½áÎ²µÄ×Ö·û´®
+    char *              image_url;      // åŸå›¾ä¸‹è½½åœ°å€ '\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *              image_thumb_url;// ç¼©ç•¥å›¾ä¸‹è½½åœ°å€ '\0'ç»“å°¾çš„å­—ç¬¦ä¸²
 }tx_image_msg_element;
 
-// ÓïÒô
+// è¯­éŸ³
 typedef struct tag_tx_audio_msg_element
 {
     unsigned int        voice_switch;
-    char *              audio_msg_url;  // ÓïÒôÏûÏ¢µÄÏÂÔØurl '\0'½áÎ²µÄ×Ö·û´®
+    char *              audio_msg_url;  // è¯­éŸ³æ¶ˆæ¯çš„ä¸‹è½½url '\0'ç»“å°¾çš„å­—ç¬¦ä¸²
 }tx_audio_msg_element;
 
 typedef struct tag_tx_barrage_msg_element
@@ -50,28 +50,28 @@ typedef struct tag_tx_barrage_msg_element
 
 typedef struct tag_tx_barrage_msg
 {
-    unsigned long long          group_id;           // Èºid
-    unsigned long long          from_target_id;     // ÏûÏ¢·¢ËÍÕßid
-    unsigned int                from_target_appid;  // ÏûÏ¢·¢ËÍÕßappid
-    unsigned int                from_target_instid; // ÏûÏ¢·¢ËÍÕßinstid
-    char *                      group_name;         // ÈºÃû×Ö£¬ÒÔ'\0'½áÎ²µÄ×Ö·û´®
-    char *                      from_nick;          // ·¢ËÍÕßnick£¬ÒÔ'\0'½áÎ²µÄ×Ö·û´®
-    char *                      from_group_card;    // ·¢ËÍÕßÈºÃûÆ¬£¬ÒÔ'\0'½áÎ²µÄ×Ö·û´®
-    char *                      from_head_url;      // ·¢ËÍÕßµÄÍ·Ïñurl£¬ÒÔ'\0'½áÎ²µÄ×Ö·û´®
-    tx_barrage_msg_element *    msg_ele_array;      // ÏûÏ¢ÔªËØÊı×é
-    int                         msg_ele_count;      // ÏûÏ¢ÔªËØÊı×é¸öÊı
+    unsigned long long          group_id;           // ç¾¤id
+    unsigned long long          from_target_id;     // æ¶ˆæ¯å‘é€è€…id
+    unsigned int                from_target_appid;  // æ¶ˆæ¯å‘é€è€…appid
+    unsigned int                from_target_instid; // æ¶ˆæ¯å‘é€è€…instid
+    char *                      group_name;         // ç¾¤åå­—ï¼Œä»¥'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *                      from_nick;          // å‘é€è€…nickï¼Œä»¥'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *                      from_group_card;    // å‘é€è€…ç¾¤åç‰‡ï¼Œä»¥'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *                      from_head_url;      // å‘é€è€…çš„å¤´åƒurlï¼Œä»¥'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    tx_barrage_msg_element *    msg_ele_array;      // æ¶ˆæ¯å…ƒç´ æ•°ç»„
+    int                         msg_ele_count;      // æ¶ˆæ¯å…ƒç´ æ•°ç»„ä¸ªæ•°
 }tx_barrage_msg;
 
 
 typedef struct tag_tx_barrage_notify
 {
-	//ÊÕµ½ÈºÏûÏ¢
+	//æ”¶åˆ°ç¾¤æ¶ˆæ¯
 	void (*on_receive_barrage_msg)(tx_barrage_msg * pMsg);
 
 }tx_barrage_notify;
 
 
-//ÉèÖÃµ¯Ä»Ïà¹ØµÄ»Øµ÷
+//è®¾ç½®å¼¹å¹•ç›¸å…³çš„å›è°ƒ
 SDK_API void tx_set_barrage_notify(tx_barrage_notify * notify);
 
 CXX_EXTERN_END

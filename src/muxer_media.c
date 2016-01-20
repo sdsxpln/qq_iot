@@ -12,6 +12,7 @@
 #include "queue.h"
 #include "common.h"
 #include "monitor_dev.h"
+#include "fs_managed.h"
 #include "media_muxer_lib.h"
 #include "demuxer_media.h"
 #include "muxer_media.h"
@@ -487,7 +488,7 @@ static char * mux_media_new_file(record_node_t * dest_node)
 		return(NULL);
 	}
 	snprintf(new_file_name,63,"%s%s%d%s",RECORD_PATH,"/",time_value,RECORD_TMP_FLAG);
-
+	
 	return(new_file_name);
 	
 fail:
@@ -665,6 +666,7 @@ static void * mux_record_pthread(void * arg)
 				demuxer_init_cur_file();
 				demuxer_set_cur_file_name(node->file_name);
 				demuxer_set_cur_start_time(node->start_time);
+				fs_hangle_file(FILE_RECORD,FILE_NEW,NULL);
 				dbg_printf("the file name is %s \n",node->file_name);
 				node->need_seek = 0;
 				node->offset_seek = 0;
@@ -729,7 +731,7 @@ out:
 			pthread_mutex_unlock(&(handle->cur_node->mutex_mux_data));
 			pthread_cond_signal(&(handle->cur_node->cond_mux_data));
 
-			if(handle->cur_node->file_size > 100*1024*1024)
+			if(handle->cur_node->file_size > 5*1024*1024)
 			{
 				handle->cur_node->need_exit = 1;
 				handle->cur_node = NULL;

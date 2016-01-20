@@ -8,16 +8,16 @@ CXX_EXTERN_BEGIN
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//                 µÍ¼¶½Ó¿Ú£º Ö±½Ó´¦Àí DATAPOINT ÏûÏ¢
+//                 ä½çº§æ¥å£ï¼š ç›´æ¥å¤„ç† DATAPOINT æ¶ˆæ¯
 //
 ///////////////////////////////////////////////////////////////////////////
 //
-//   DATAPOINT½á¹¹Ìå
+//   DATAPOINTç»“æ„ä½“
 //
-//  £¨1£©Ò»¸ö datapoint ÖĞ×îÖØÒªµÄĞÅÏ¢¾ÍÊÇ id ºÍ value
-//  £¨2£©QQÎïÁªºóÌ¨µÄËùÓĞÏûÏ¢¶¼ÊÇÓÃ datapoint id ½øĞĞÔ¼ÊøµÄ£¬
-//  £¨3£©Èç¹û datapoint id ÏàÍ¬£¬Ôòvalue²ÉÓÃÍ¬ÑùµÄ¸ñÊ½½øĞĞ×éÖ¯
-//  £¨4£©QQÎïÁªÆ½Ì¨ÖĞµÄËùÓĞÖÇÄÜÉè±¸¶ÔÍ¬ÑùµÄ  datapoint id ²ÉÓÃÍ¬ÑùµÄ½âÎöÂß¼­£¬Òò¶ø¿ÉÒÔÏà»¥Àí½â
+//  ï¼ˆ1ï¼‰ä¸€ä¸ª datapoint ä¸­æœ€é‡è¦çš„ä¿¡æ¯å°±æ˜¯ id å’Œ value
+//  ï¼ˆ2ï¼‰QQç‰©è”åå°çš„æ‰€æœ‰æ¶ˆæ¯éƒ½æ˜¯ç”¨ datapoint id è¿›è¡Œçº¦æŸçš„ï¼Œ
+//  ï¼ˆ3ï¼‰å¦‚æœ datapoint id ç›¸åŒï¼Œåˆ™valueé‡‡ç”¨åŒæ ·çš„æ ¼å¼è¿›è¡Œç»„ç»‡
+//  ï¼ˆ4ï¼‰QQç‰©è”å¹³å°ä¸­çš„æ‰€æœ‰æ™ºèƒ½è®¾å¤‡å¯¹åŒæ ·çš„  datapoint id é‡‡ç”¨åŒæ ·çš„è§£æé€»è¾‘ï¼Œå› è€Œå¯ä»¥ç›¸äº’ç†è§£
 //   
 
 typedef struct tag_tx_data_point
@@ -35,7 +35,7 @@ typedef struct tag_tx_data_point_notify
     void (*on_receive_data_point)(unsigned long long from_client, tx_data_point * data_points, int data_points_count);
 } tx_data_point_notify;
 
-// ³õÊ¼»¯datapoint
+// åˆå§‹åŒ–datapoint
 // notify: receive datapoint callback
 SDK_API int tx_init_data_point(const tx_data_point_notify *notify);
 
@@ -44,21 +44,21 @@ SDK_API int tx_init_data_point(const tx_data_point_notify *notify);
 
 
 
-// ÉÏ±¨datapointÊı¾İ ½á¹ûcallback
+// ä¸ŠæŠ¥datapointæ•°æ® ç»“æœcallback
 typedef void (*on_report_data_point_ret)(unsigned int cookie, int err_code);
 
-// ÉÏ±¨datapointÊı¾İ
-// [in]     id:             ÉÏ±¨µÄdatapoint ID
-// [in]     value:          ÉÏ±¨µÄdatapoint value
-// [out]    cookie:         ·µ»Øµ÷ÓÃcookie
-// [in]     ret_callback:   ·¢ËÍ½á¹ûcallback
+// ä¸ŠæŠ¥datapointæ•°æ®
+// [in]     id:             ä¸ŠæŠ¥çš„datapoint ID
+// [in]     value:          ä¸ŠæŠ¥çš„datapoint value
+// [out]    cookie:         è¿”å›è°ƒç”¨cookie
+// [in]     ret_callback:   å‘é€ç»“æœcallback
 SDK_API int tx_report_data_point(unsigned int id, char * value, unsigned int * cookie, on_report_data_point_ret ret_callback);
 
-// ÉÏ±¨Ò»×édatapointÊı¾İ
-// [in]     data_points:        ÉÏ±¨µÄdatapoint
-// [in]     data_points_count:  ÉÏ±¨µÄdatapoint count
-// [out]    cookie:             ·µ»Øµ÷ÓÃcookie
-// [in]     ret_callback:       ·¢ËÍ½á¹ûcallback
+// ä¸ŠæŠ¥ä¸€ç»„datapointæ•°æ®
+// [in]     data_points:        ä¸ŠæŠ¥çš„datapoint
+// [in]     data_points_count:  ä¸ŠæŠ¥çš„datapoint count
+// [out]    cookie:             è¿”å›è°ƒç”¨cookie
+// [in]     ret_callback:       å‘é€ç»“æœcallback
 SDK_API int tx_report_data_points(tx_data_point * data_points, int data_points_count, unsigned int * cookie, on_report_data_point_ret ret_callback);
 
 
@@ -68,21 +68,21 @@ SDK_API int tx_report_data_points(tx_data_point * data_points, int data_points_c
 
 typedef void (*on_ack_data_point_ret)(unsigned int cookie, unsigned long long from_client, int err_code);
 
-// Ó¦´ğÊÕµ½µÄdatapoint
-// [in]    from_client:     datapointĞÅÁîÀ´×ÔÄ³¸ö°ó¶¨Õß£¬       ±ØĞëºÍÒÑÊÕµ½µÄdatapointÊ±µÄfrom_clientÒ»ÖÂ£¬·ñÔò»á±»¹ıÂË
-// [in]    id:              Ó¦´ğµÄdatapoint¶ÔÓ¦µÄID£¬          ±ØĞëºÍÒÑÊÕµ½µÄdatapointµÄIDÒ»ÖÂ£¬·ñÔò»á±»¹ıÂË
-// [in]    value:           Ó¦´ğµÄdatapointµÄ×Ô¶¨ÒåÊı¾İ
-// [in]    seq:             Ó¦´ğµÄdatapoint¶ÔÓ¦µÄseq£¬         ±ØĞëºÍÒÑÊÕµ½µÄdatapointµÄseqÒ»ÖÂ£¬·ñÔò»á±»¹ıÂË
-// [out]   cookie:          ·µ»Øµ÷ÓÃcookie
-// [in]    ret_callback:    ·¢ËÍ½á¹ûcallback
+// åº”ç­”æ”¶åˆ°çš„datapoint
+// [in]    from_client:     datapointä¿¡ä»¤æ¥è‡ªæŸä¸ªç»‘å®šè€…ï¼Œ       å¿…é¡»å’Œå·²æ”¶åˆ°çš„datapointæ—¶çš„from_clientä¸€è‡´ï¼Œå¦åˆ™ä¼šè¢«è¿‡æ»¤
+// [in]    id:              åº”ç­”çš„datapointå¯¹åº”çš„IDï¼Œ          å¿…é¡»å’Œå·²æ”¶åˆ°çš„datapointçš„IDä¸€è‡´ï¼Œå¦åˆ™ä¼šè¢«è¿‡æ»¤
+// [in]    value:           åº”ç­”çš„datapointçš„è‡ªå®šä¹‰æ•°æ®
+// [in]    seq:             åº”ç­”çš„datapointå¯¹åº”çš„seqï¼Œ         å¿…é¡»å’Œå·²æ”¶åˆ°çš„datapointçš„seqä¸€è‡´ï¼Œå¦åˆ™ä¼šè¢«è¿‡æ»¤
+// [out]   cookie:          è¿”å›è°ƒç”¨cookie
+// [in]    ret_callback:    å‘é€ç»“æœcallback
 SDK_API int tx_ack_data_point(unsigned long long from_client, unsigned int id, char * value, unsigned int seq, unsigned int ret_code, unsigned int * cookie, on_ack_data_point_ret ret_callback);
 
-// Ó¦´ğÊÕµ½µÄÒ»×édatapoint
-// [in]    from_client:         datapointĞÅÁîÀ´×ÔÄ³¸ö°ó¶¨Õß£¬       ±ØĞëºÍÒÑÊÕµ½µÄdatapointÊ±µÄfrom_clientÒ»ÖÂ£¬·ñÔò»á±»¹ıÂË
-// [in]    data_points:         Ó¦´ğµÄdatapoint£¬                 Ó¦´ğµÄÒ»×édatapoint£¬Óë½ÓÊÕµ½µÄÒ»×édatapointµÄ ID & seqĞèÒªÒ»ÖÂ£¬Èô´æÔÚ frome_client & ID & seq ²»´æÔÚÊÕµ½µÄdatapoint¼ÇÂ¼£¬»á±»¹ıÂË
+// åº”ç­”æ”¶åˆ°çš„ä¸€ç»„datapoint
+// [in]    from_client:         datapointä¿¡ä»¤æ¥è‡ªæŸä¸ªç»‘å®šè€…ï¼Œ       å¿…é¡»å’Œå·²æ”¶åˆ°çš„datapointæ—¶çš„from_clientä¸€è‡´ï¼Œå¦åˆ™ä¼šè¢«è¿‡æ»¤
+// [in]    data_points:         åº”ç­”çš„datapointï¼Œ                 åº”ç­”çš„ä¸€ç»„datapointï¼Œä¸æ¥æ”¶åˆ°çš„ä¸€ç»„datapointçš„ ID & seqéœ€è¦ä¸€è‡´ï¼Œè‹¥å­˜åœ¨ frome_client & ID & seq ä¸å­˜åœ¨æ”¶åˆ°çš„datapointè®°å½•ï¼Œä¼šè¢«è¿‡æ»¤
 // [in]    data_points_count:   datapoint count
-// [out]   cookie:              ·µ»Øµ÷ÓÃcookie
-// [in]    ret_callback:        ·¢ËÍ½á¹ûcallback
+// [out]   cookie:              è¿”å›è°ƒç”¨cookie
+// [in]    ret_callback:        å‘é€ç»“æœcallback
 SDK_API int tx_ack_data_points(unsigned long long from_client, tx_data_point * data_points, int data_points_count, unsigned int * cookie, on_ack_data_point_ret ret_callback);
 
 

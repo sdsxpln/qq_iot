@@ -50,7 +50,6 @@ typedef    volatile unsigned int   V_UINT32;
 #define    T_S64_MAX            ((T_S64)(9223372036854775807LL))        // maximum T_S64 value
 
 /* basal type definition for global area */
-#define bool                     _Bool
 typedef T_U8                    T_BOOL;     /* BOOL type */
 
 typedef T_VOID *                T_pVOID;    /* pointer of void data */
@@ -78,7 +77,7 @@ typedef T_S32                   T_LEN;      /* length type */
 
 #define         AK_FALSE            0
 #define         AK_TRUE             1
-#define         AK_NULL             ((T_pVOID)(0))
+#define         AK_NULL             0//((T_pVOID)(0))
 
 #define        AK_EMPTY
 

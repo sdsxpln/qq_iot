@@ -5,21 +5,23 @@
 
 typedef struct tag_tx_tv_notify
 {
-	//µçÊÓÊ×´Î±»°ó¶¨³É¹¦Ê±»Øµ÷
+	//ç”µè§†é¦–æ¬¡è¢«ç»‘å®šæˆåŠŸæ—¶å›è°ƒ
 	void (*on_bind_complete)(unsigned long long ddwID, int error);
 
-	//ÊÕµ½ÊÓÆµÇëÇó
+	//æ”¶åˆ°è§†é¢‘è¯·æ±‚
 	void (*on_receive_video_push)(char * pBufReply, int nLenReply);
 
 }tx_tv_notify;
 
 
-//ÉèÖÃµçÊÓÏà¹ØµÄ»Øµ÷
+//è®¾ç½®ç”µè§†ç›¸å…³çš„å›è°ƒ
 SDK_API void tx_set_tv_notify(tx_tv_notify * notify);
 
-//·¢ËÍÊÓÆµÇëÇó
+//å‘é€è§†é¢‘è¯·æ±‚
 typedef void (*on_receive_video_reply)(char * pBufReply, int nLenReply);
 SDK_API void tx_send_video_request(int type, unsigned long long toDin, const char * pBuff, unsigned int uLen, on_receive_video_reply callback);
+
+SDK_API bool getQRCodeUrl(char *pUrlBuf, int bufSize);
 
 #ifdef __cplusplus
 extern "C"

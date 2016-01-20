@@ -20,55 +20,56 @@
 
 CXX_EXTERN_BEGIN
 
-//È«¾Ö´íÎóÂë±í
+//å…¨å±€é”™è¯¯ç è¡¨
 enum error_code
 {
     err_null                                = 0x00000000,       //success
     err_failed                              = 0x00000001,       //failed
-    err_unknown                             = 0x00000002,       //Î´Öª´íÎó
-    err_invalid_param                       = 0x00000003,       //²ÎÊı·Ç·¨
-    err_buffer_notenough                    = 0x00000004,       //buffer³¤¶È²»×ã
-    err_mem_alloc                           = 0x00000005,       //·ÖÅäÄÚ´æÊ§°Ü
-    err_internal                            = 0x00000006,       //ÄÚ²¿´íÎó
-    err_device_inited                       = 0x00000007,       //Éè±¸ÒÑ¾­³õÊ¼»¯¹ıÁË
-    err_av_service_started                  = 0x00000008,       //av_serviceÒÑ¾­Æô¶¯ÁË
-    err_invalid_device_info                 = 0x00000009,       //·Ç·¨µÄÉè±¸ĞÅÏ¢
-    err_invalid_serial_number               = 0x0000000A,       //(10)      ·Ç·¨µÄÉè±¸ĞòÁĞºÅ
-    err_invalid_fs_handler                  = 0x0000000B,       //(11)      ·Ç·¨µÄ¶ÁĞ´»Øµ÷
-    err_invalid_device_notify               = 0x0000000C,       //(12)      ·Ç·¨µÄÉè±¸Í¨Öª»Øµ÷
-    err_invalid_av_callback                 = 0x0000000D,       //(13)      ·Ç·¨µÄÒôÊÓÆµ»Øµ÷
-    err_invalid_system_path                 = 0x0000000E,       //(14)      ·Ç·¨µÄsystem_path
-    err_invalid_app_path                    = 0x0000000F,       //(15)      ·Ç·¨µÄapp_path
-    err_invalid_temp_path                   = 0x00000010,       //(16)      ·Ç·¨µÄtemp_path
-    err_not_impl                            = 0x00000011,       //(17)      Î´ÊµÏÖ
-    err_fetching                            = 0x00000012,       //(18)      ÕıÔÚÏòºóÌ¨»ñÈ¡Êı¾İÖĞ
-    err_fetching_buff_not_enough            = 0x00000013,       //(19)      ÕıÔÚÏòºóÌ¨»ñÈ¡Êı¾İÖĞ & buffer³¤¶È²»×ã
-    err_off_line                            = 0x00000014,       //(20)      µ±Ç°Éè±¸´¦ÓÚÀëÏß×´Ì¬
-    err_invalid_device_name                 = 0x00000015,       //(21)      Éè±¸ÃûÃ»Ìî£¬»òÕß³¤¶È³¬¹ı32byte
-    err_invalid_os_platform                 = 0x00000016,       //(22)      ÏµÍ³ĞÅÏ¢Ã»Ìî£¬»òÕß³¤¶È³¬¹ı32byte
-    err_invalid_license                     = 0x00000017,       //(23)      licenseÃ»Ìî£¬»òÕß³¤¶È³¬¹ı150byte
-    err_invalid_server_pub_key              = 0x00000018,       //(24)      server_pub_keyÃ»Ìî£¬»òÕß³¤¶È³¬¹ı120byte
-    err_invalid_product_version             = 0x00000019,       //(25)      product_version·Ç·¨
-    err_invalid_product_id                  = 0x0000001A,       //(26)      product_id·Ç·¨
-    err_connect_failed                      = 0x0000001B,       //socket connectÊ§°Ü
-    err_call_too_frequently                 = 0x0000001C,       //(28)      µ÷ÓÃµÄÌ«Æµ·±ÁË
-    err_sys_path_access_permission          = 0x0000001D,       //(29)      system_pathÃ»ÓĞ¶ÁĞ´È¨ÏŞ
-    err_invalid_network_type				= 0x0000001E,		//(30)		³õÊ¼»¯Ê±´«ÈëµÄÍøÂçÀàĞÍ·Ç·¨
+    err_unknown                             = 0x00000002,       //æœªçŸ¥é”™è¯¯
+    err_invalid_param                       = 0x00000003,       //å‚æ•°éæ³•
+    err_buffer_notenough                    = 0x00000004,       //bufferé•¿åº¦ä¸è¶³
+    err_mem_alloc                           = 0x00000005,       //åˆ†é…å†…å­˜å¤±è´¥
+    err_internal                            = 0x00000006,       //å†…éƒ¨é”™è¯¯
+    err_device_inited                       = 0x00000007,       //è®¾å¤‡å·²ç»åˆå§‹åŒ–è¿‡äº†
+    err_av_service_started                  = 0x00000008,       //av_serviceå·²ç»å¯åŠ¨äº†
+    err_invalid_device_info                 = 0x00000009,       //éæ³•çš„è®¾å¤‡ä¿¡æ¯
+    err_invalid_serial_number               = 0x0000000A,       //(10)      éæ³•çš„è®¾å¤‡åºåˆ—å·
+    err_invalid_fs_handler                  = 0x0000000B,       //(11)      éæ³•çš„è¯»å†™å›è°ƒ
+    err_invalid_device_notify               = 0x0000000C,       //(12)      éæ³•çš„è®¾å¤‡é€šçŸ¥å›è°ƒ
+    err_invalid_av_callback                 = 0x0000000D,       //(13)      éæ³•çš„éŸ³è§†é¢‘å›è°ƒ
+    err_invalid_system_path                 = 0x0000000E,       //(14)      éæ³•çš„system_path
+    err_invalid_app_path                    = 0x0000000F,       //(15)      éæ³•çš„app_path
+    err_invalid_temp_path                   = 0x00000010,       //(16)      éæ³•çš„temp_path
+    err_not_impl                            = 0x00000011,       //(17)      æœªå®ç°
+    err_fetching                            = 0x00000012,       //(18)      æ­£åœ¨å‘åå°è·å–æ•°æ®ä¸­
+    err_fetching_buff_not_enough            = 0x00000013,       //(19)      æ­£åœ¨å‘åå°è·å–æ•°æ®ä¸­ & bufferé•¿åº¦ä¸è¶³
+    err_off_line                            = 0x00000014,       //(20)      å½“å‰è®¾å¤‡å¤„äºç¦»çº¿çŠ¶æ€
+    err_invalid_device_name                 = 0x00000015,       //(21)      è®¾å¤‡åæ²¡å¡«ï¼Œæˆ–è€…é•¿åº¦è¶…è¿‡32byte
+    err_invalid_os_platform                 = 0x00000016,       //(22)      ç³»ç»Ÿä¿¡æ¯æ²¡å¡«ï¼Œæˆ–è€…é•¿åº¦è¶…è¿‡32byte
+    err_invalid_license                     = 0x00000017,       //(23)      licenseæ²¡å¡«ï¼Œæˆ–è€…é•¿åº¦è¶…è¿‡150byte
+    err_invalid_server_pub_key              = 0x00000018,       //(24)      server_pub_keyæ²¡å¡«ï¼Œæˆ–è€…é•¿åº¦è¶…è¿‡120byte
+    err_invalid_product_version             = 0x00000019,       //(25)      product_versionéæ³•
+    err_invalid_product_id                  = 0x0000001A,       //(26)      product_idéæ³•
+    err_connect_failed                      = 0x0000001B,       //socket connectå¤±è´¥
+    err_call_too_frequently                 = 0x0000001C,       //(28)      è°ƒç”¨çš„å¤ªé¢‘ç¹äº†
+    err_sys_path_access_permission          = 0x0000001D,       //(29)      system_pathæ²¡æœ‰è¯»å†™æƒé™
+    err_invalid_network_type				= 0x0000001E,		//(30)		åˆå§‹åŒ–æ—¶ä¼ å…¥çš„ç½‘ç»œç±»å‹éæ³•
+    err_invalid_run_mode					= 0x0000001F,		//(31)      åˆå§‹åŒ–æ—¶ä¼ å…¥çš„SDKè¿è¡Œæ¨¡å¼éæ³•
 
-    err_login_failed                        = 0x00010001,       //(65537)   µÇÂ¼Ê§°Ü
-    err_login_invalid_deviceinfo            = 0x00010002,       //(65538)   Éè±¸ĞÅÏ¢·Ç·¨
-    err_login_connect_failed                = 0x00010003,       //(65539)   Á¬½ÓServerÊ§°Ü
-    err_login_timeout                       = 0x00010004,       //(65540)   µÇÂ¼³¬Ê±
-    err_login_eraseinfo                     = 0x00010005,       //(65541)   ²Á³ıÉè±¸ĞÅÏ¢
-    err_login_servererror                   = 0x00010006,       //(65542)   µÇÂ¼Server·µ»Ø´íÎó
+    err_login_failed                        = 0x00010001,       //(65537)   ç™»å½•å¤±è´¥
+    err_login_invalid_deviceinfo            = 0x00010002,       //(65538)   è®¾å¤‡ä¿¡æ¯éæ³•
+    err_login_connect_failed                = 0x00010003,       //(65539)   è¿æ¥Serverå¤±è´¥
+    err_login_timeout                       = 0x00010004,       //(65540)   ç™»å½•è¶…æ—¶
+    err_login_eraseinfo                     = 0x00010005,       //(65541)   æ“¦é™¤è®¾å¤‡ä¿¡æ¯
+    err_login_servererror                   = 0x00010006,       //(65542)   ç™»å½•Serverè¿”å›é”™è¯¯
  
-    err_msg_sendfailed                      = 0x00020001,       //(131073)  ÏûÏ¢·¢ËÍÊ§°Ü
-    err_msg_sendtimeout                     = 0x00020002,       //(131074)  ÏûÏ¢·¢ËÍ³¬Ê±
+    err_msg_sendfailed                      = 0x00020001,       //(131073)  æ¶ˆæ¯å‘é€å¤±è´¥
+    err_msg_sendtimeout                     = 0x00020002,       //(131074)  æ¶ˆæ¯å‘é€è¶…æ—¶
  
-    err_av_unlogin                          = 0x00030001,       //(196609)  Î´µÇÂ¼µÄÇé¿öÏÂÆô¶¯ÒôÊÓÆµ·şÎñ
+    err_av_unlogin                          = 0x00030001,       //(196609)  æœªç™»å½•çš„æƒ…å†µä¸‹å¯åŠ¨éŸ³è§†é¢‘æœåŠ¡
  
-    err_ft_transfer_failed                  = 0x00040001,       //(262145)  ÎÄ¼ş´«Êä(·¢ËÍ/½ÓÊÕ)Ê§°Ü
-    err_ft_file_too_large                   = 0x00040002,       //(262146)  ·¢ËÍµÄÎÄ¼şÌ«´ó
+    err_ft_transfer_failed                  = 0x00040001,       //(262145)  æ–‡ä»¶ä¼ è¾“(å‘é€/æ¥æ”¶)å¤±è´¥
+    err_ft_file_too_large                   = 0x00040002,       //(262146)  å‘é€çš„æ–‡ä»¶å¤ªå¤§
     //...
 };
 

@@ -23,7 +23,7 @@ enum historyVideoList
 CXX_EXTERN_BEGIN
 
 /**
- * ÊÓÆµ»Ø¿´µÄÀúÊ·ÊÓÆµÇø¼ä
+ * è§†é¢‘å›çœ‹çš„å†å²è§†é¢‘åŒºé—´
  */
 typedef struct _tx_history_video_range
 {

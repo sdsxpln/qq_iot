@@ -5,169 +5,180 @@
 #include "TXOldInf.h"
 
 ////////////////////////////////////////////////////////////////////////////
-//  ÎÄ¼ş´«Êä½Ó¿Ú
+//  æ–‡ä»¶ä¼ è¾“æ¥å£
 ////////////////////////////////////////////////////////////////////////////
 
 
 CXX_EXTERN_BEGIN
 
 /**
- * Ä¿Ç°ÒÑ¾­ÔÚÊ¹ÓÃµÄÒµÎñÃû³Æ
+ * ç›®å‰å·²ç»åœ¨ä½¿ç”¨çš„ä¸šåŠ¡åç§°
  */
-#define BUSINESS_NAME_IMAGE_MSG             "ImgMsg"                  // À´×ÔÊÖ»úQQµÄÍ¼Æ¬ÏûÏ¢
-#define BUSINESS_NAME_AUDIO_MSG             "AudioMsg"                // À´×ÔÊÖ»úQQµÄÓïÒôÁôÑÔ
-#define BUSINESS_NAME_VIDEO_MSG             "VideoMsg"                // À´×ÔÊÖ»úQQµÄÊÓÆµÁôÑÔ
+#define BUSINESS_NAME_IMAGE_MSG             "ImgMsg"                  // æ¥è‡ªæ‰‹æœºQQçš„å›¾ç‰‡æ¶ˆæ¯
+#define BUSINESS_NAME_AUDIO_MSG             "AudioMsg"                // æ¥è‡ªæ‰‹æœºQQçš„è¯­éŸ³ç•™è¨€
+#define BUSINESS_NAME_VIDEO_MSG             "VideoMsg"                // æ¥è‡ªæ‰‹æœºQQçš„è§†é¢‘ç•™è¨€
 
-#define BUSINESS_NAME_NAS_DEVPUSHFILE       "7000-NASDevPushFile"     // Éè±¸(NAS)ÏòÊÖ»úQQ·¢ËÍÎÄ¼ş
-#define BUSINESS_NAME_NAS_DEVPUSHTHUMB      "7001-NASDevPushThumb"    // Éè±¸(NAS)ÏòÊÖ»úQQ·¢ËÍËõÂÔÍ¼
+#define BUSINESS_NAME_NAS_DEVPUSHFILE       "7000-NASDevPushFile"     // è®¾å¤‡(NAS)å‘æ‰‹æœºQQå‘é€æ–‡ä»¶
+#define BUSINESS_NAME_NAS_DEVPUSHTHUMB      "7001-NASDevPushThumb"    // è®¾å¤‡(NAS)å‘æ‰‹æœºQQå‘é€ç¼©ç•¥å›¾
 
-#define BUSINESS_NAME_NAS_FILE_MUSIC        "8000-NASDevMusicFile"    // ÊÖQÏòÉè±¸·¢ÒôÀÖ
-#define BUSINESS_NAME_NAS_FILE_VIDEO        "8001-NASDevVideoFile"    // ÊÖQÏòÉè±¸·¢ÊÓÆµ(½Ï´óµÄÎÄ¼ş)
-#define BUSINESS_NAME_NAS_FILE_DOC          "8002-NASDevDocumentFile" // ÊÖQÏòÉè±¸·¢ÎÄµµ
-#define BUSINESS_NAME_NAS_FILE_COMMON       "8003-NASDevCommonFile"   // ÊÖQÏòÉè±¸·¢ÆäËûÎÄ¼ş
+#define BUSINESS_NAME_NAS_FILE_MUSIC        "8000-NASDevMusicFile"    // æ‰‹Qå‘è®¾å¤‡å‘éŸ³ä¹
+#define BUSINESS_NAME_NAS_FILE_VIDEO        "8001-NASDevVideoFile"    // æ‰‹Qå‘è®¾å¤‡å‘è§†é¢‘(è¾ƒå¤§çš„æ–‡ä»¶)
+#define BUSINESS_NAME_NAS_FILE_DOC          "8002-NASDevDocumentFile" // æ‰‹Qå‘è®¾å¤‡å‘æ–‡æ¡£
+#define BUSINESS_NAME_NAS_FILE_COMMON       "8003-NASDevCommonFile"   // æ‰‹Qå‘è®¾å¤‡å‘å…¶ä»–æ–‡ä»¶
 
-// ... ³ÖĞøÌí¼ÓÖĞ
+// ... æŒç»­æ·»åŠ ä¸­
 
 /**
- * ´«ÊäÈÎÎñÀàĞÍ £¨tx_file_transfer_info -> transfer_type£©
+ * ä¼ è¾“ä»»åŠ¡ç±»å‹ ï¼ˆtx_file_transfer_info -> transfer_typeï¼‰
  */
 enum tx_file_transfer_type
 {
     transfet_type_none       = 0,   
-    transfer_type_upload     = 1,   // µ±Ç°ÈÎÎñÊÇÉÏ´«ÈÎÎñ
-    transfer_type_download   = 2,   // µ±Ç°ÈÎÎñÊÇÏÂÔØÈÎÎñ
+    transfer_type_upload     = 1,   // å½“å‰ä»»åŠ¡æ˜¯ä¸Šä¼ ä»»åŠ¡
+    transfer_type_download   = 2,   // å½“å‰ä»»åŠ¡æ˜¯ä¸‹è½½ä»»åŠ¡
 
-    transfer_type_c2c_in     = 3,   // ¹© SDK ÄÚ²¿Ê¹ÓÃ
-    transfer_type_c2c_out    = 4,   // ¹© SDK ÄÚ²¿Ê¹ÓÃ
+    transfer_type_c2c_in     = 3,   // ä¾› SDK å†…éƒ¨ä½¿ç”¨
+    transfer_type_c2c_out    = 4,   // ä¾› SDK å†…éƒ¨ä½¿ç”¨
 };
 
 /**
- * ´«ÊäÎÄ¼şÀàĞÍ £¨tx_file_transfer_info -> file_type£©
+ * ä¼ è¾“æ–‡ä»¶ç±»å‹ ï¼ˆtx_file_transfer_info -> file_typeï¼‰
  */
 enum tx_file_transfer_filetype
 {
-    transfer_filetype_image = 1,    //Í¼Æ¬ÎÄ¼ş
-    transfer_filetype_video = 2,    //ÊÓÆµÎÄ¼ş
-    transfer_filetype_audio = 3,    //ÓïÒôÎÄ¼ş
-    transfer_filetype_other = 4,    //ÆäËüÎÄ¼ş
+    transfer_filetype_image = 1,    //å›¾ç‰‡æ–‡ä»¶
+    transfer_filetype_video = 2,    //è§†é¢‘æ–‡ä»¶
+    transfer_filetype_audio = 3,    //è¯­éŸ³æ–‡ä»¶
+    transfer_filetype_other = 4,    //å…¶å®ƒæ–‡ä»¶
 };
 
 
 /**
- * ´«ÊäÍ¨µÀÀàĞÍ £¨tx_file_transfer_info -> channel_type£©
+ * ä¼ è¾“é€šé“ç±»å‹ ï¼ˆtx_file_transfer_info -> channel_typeï¼‰
  */
 enum tx_file_transfer_channeltype
 {
-    // FTN ÎÄ¼ş´«ÊäÍ¨µÀ, ¸ÃÍ¨µÀÌØµãÈçÏÂ£º
-    //£¨1£©°²È«ĞÔ¼«¸ß£º´ø¸ßÇ¿¶È°²È«Ğ£Ñé£¬ÎŞµÇÂ¼×´Ì¬ÎŞ·¨·ÃÎÊ
-    //£¨2£©ÎÄ¼şÈİÁ¿´ó£º×î´óÖ§³ÖÎÄ¼ş´óĞ¡Îª 4G
-    //£¨3£©ÓĞÉÏ´«ÏŞÖÆ£ºÍ¬Ò»ÕËºÅ 7 ÌìÄÚ×î¶àÉÏ´« 5000 ¸öÎÄ¼ş£¬¶àÓÚ´Ë»á±»·şÎñÆ÷¾Ü¾ø
+    // FTN æ–‡ä»¶ä¼ è¾“é€šé“, è¯¥é€šé“ç‰¹ç‚¹å¦‚ä¸‹ï¼š
+    //ï¼ˆ1ï¼‰å®‰å…¨æ€§æé«˜ï¼šå¸¦é«˜å¼ºåº¦å®‰å…¨æ ¡éªŒï¼Œæ— ç™»å½•çŠ¶æ€æ— æ³•è®¿é—®
+    //ï¼ˆ2ï¼‰æ–‡ä»¶å®¹é‡å¤§ï¼šæœ€å¤§æ”¯æŒæ–‡ä»¶å¤§å°ä¸º 4G
+    //ï¼ˆ3ï¼‰æœ‰ä¸Šä¼ é™åˆ¶ï¼šåŒä¸€è´¦å· 7 å¤©å†…æœ€å¤šä¸Šä¼  5000 ä¸ªæ–‡ä»¶ï¼Œå¤šäºæ­¤ä¼šè¢«æœåŠ¡å™¨æ‹’ç»
     transfer_channeltype_FTN     =   1,   
 
-    // Ğ¡ÎÄ¼ş´«ÊäÍ¨µÀ, ¸ÃÍ¨µÀÌØµãÈçÏÂ£º
-    //£¨1£©×¨ÎªPPTÓïÒô¶ÌĞÅ£¬Í¼Æ¬µÈĞ¡ÎÄ¼ş³¡¾°·şÎñ£¬×î´óÖ§³ÖÎÄ¼ş´óĞ¡25M
-    //£¨2£©ÎŞÈ¨ÏŞĞ£Ñé£¬ÓĞurl¾Í¿ÉÒÔÏÂÔØ£¬°²È«Ç¿¶È½ÏµÍ
+    // å°æ–‡ä»¶ä¼ è¾“é€šé“, è¯¥é€šé“ç‰¹ç‚¹å¦‚ä¸‹ï¼š
+    //ï¼ˆ1ï¼‰ä¸“ä¸ºPPTè¯­éŸ³çŸ­ä¿¡ï¼Œå›¾ç‰‡ç­‰å°æ–‡ä»¶åœºæ™¯æœåŠ¡ï¼Œæœ€å¤§æ”¯æŒæ–‡ä»¶å¤§å°25M
+    //ï¼ˆ2ï¼‰æ— æƒé™æ ¡éªŒï¼Œæœ‰urlå°±å¯ä»¥ä¸‹è½½ï¼Œå®‰å…¨å¼ºåº¦è¾ƒä½
     transfer_channeltype_MINI    =   2,   
 };
 
 
 
 /**
- * ÈÎÎñĞÅÏ¢
+ * ä»»åŠ¡ä¿¡æ¯
  */
 typedef struct tag_tx_file_transfer_info
 {
-    char                file_path[1024];    // ÎÄ¼ş±¾µØÂ·¾¶                                    £¨Í¨ÓÃ×Ö¶Î£©
-    char                file_key[512];      // ÎÄ¼şµÄºóÌ¨Ë÷Òı                                  £¨Í¨ÓÃ×Ö¶Î£©
+    char                file_path[1024];    // æ–‡ä»¶æœ¬åœ°è·¯å¾„                                    ï¼ˆé€šç”¨å­—æ®µï¼‰
+    char                file_key[512];      // æ–‡ä»¶çš„åå°ç´¢å¼•                                  ï¼ˆé€šç”¨å­—æ®µï¼‰
     int                 key_length;
 
-    char *              buffer_raw;			// ÏÂÔØµ½µÄBuffer
+    char *              buffer_raw;			// ä¸‹è½½åˆ°çš„Buffer
     unsigned long long  buffer_raw_len;
-    char                buffer_key[512];	// ÉÏ´«BufferºóµÃµ½µÄºóÌ¨Ë÷Òı
+    char                buffer_key[512];	// ä¸Šä¼ Bufferåå¾—åˆ°çš„åå°ç´¢å¼•
     int                 buffer_key_len;
 
-    char *              buff_with_file;     // C2C·¢ËÍÎÄ¼ş¸½´øµÄ×Ô¶¨ÒåBUFFER     £¨½öÓÃÓÚ tx_send_file_to£©
+    char *              buff_with_file;     // C2Cå‘é€æ–‡ä»¶é™„å¸¦çš„è‡ªå®šä¹‰BUFFER     ï¼ˆä»…ç”¨äº tx_send_file_toï¼‰
     int                 buff_length;
 
-    char                bussiness_name[64]; // ÓÃÓÚÈ·¶¨·¢ËÍ or ½ÓÊÕµÄÎÄ¼şµÄÒµÎñ³¡¾°            £¨Í¨ÓÃ×Ö¶Î£©
-                                            // ±ÈÈçÊÕµ½Ò»¸öÎÄ¼şÊ±£¬Õâ¸ö×Ö¶ÎÓÃÀ´Ö¸Ã÷ÎÄ¼şÊÇÓïÒôÁôÑÔ£¬»¹ÊÇ¸ø´òÓ¡»úµÄ´ı´òÓ¡ÎÄ¼ş
-                                            // ÒÑ¾­·ÖÅäµÄ business name ¼û´ËÍ·ÎÄ¼ş×î¿ªÊ¼µÄºê¶¨Òå
+    char                bussiness_name[64]; // ç”¨äºç¡®å®šå‘é€ or æ¥æ”¶çš„æ–‡ä»¶çš„ä¸šåŠ¡åœºæ™¯            ï¼ˆé€šç”¨å­—æ®µï¼‰
+                                            // æ¯”å¦‚æ”¶åˆ°ä¸€ä¸ªæ–‡ä»¶æ—¶ï¼Œè¿™ä¸ªå­—æ®µç”¨æ¥æŒ‡æ˜æ–‡ä»¶æ˜¯è¯­éŸ³ç•™è¨€ï¼Œè¿˜æ˜¯ç»™æ‰“å°æœºçš„å¾…æ‰“å°æ–‡ä»¶
+                                            // å·²ç»åˆ†é…çš„ business name è§æ­¤å¤´æ–‡ä»¶æœ€å¼€å§‹çš„å®å®šä¹‰
     
-    unsigned long long  file_size;          // ÎÄ¼ş´óĞ¡                                        £¨Í¨ÓÃ×Ö¶Î£©
-    int                 channel_type;       // Í¨µÀÀàĞÍ£ºtx_file_transfer_channeltype          £¨Í¨ÓÃ×Ö¶Î£©
-    int                 file_type;          // ÎÄ¼şÀàĞÍ£ºtx_file_transfer_filetype             £¨Í¨ÓÃ×Ö¶Î£©
+    unsigned long long  file_size;          // æ–‡ä»¶å¤§å°                                        ï¼ˆé€šç”¨å­—æ®µï¼‰
+    int                 channel_type;       // é€šé“ç±»å‹ï¼štx_file_transfer_channeltype          ï¼ˆé€šç”¨å­—æ®µï¼‰
+    int                 file_type;          // æ–‡ä»¶ç±»å‹ï¼štx_file_transfer_filetype             ï¼ˆé€šç”¨å­—æ®µï¼‰
     int                 transfer_type;      // upload  download  c2c_in  c2c_out
 }tx_file_transfer_info;
 
 
 /**
-* Í¨Öª£¬»Øµ÷
+* é€šçŸ¥ï¼Œå›è°ƒ
 */
 typedef struct tag_tx_file_transfer_notify
 {
-    // ´«Êä½ø¶È
-    // transfer_progress £º ÉÏ´« ÏÂÔØ½ø¶È
-    // max_transfer_progress £º ½ø¶ÈµÄ×î´óÖµ£¬ transfer_progress/max_transfer_progress ¼ÆËã´«Êä°Ù·Ö±È
+    // ä¼ è¾“è¿›åº¦
+    // transfer_progress ï¼š ä¸Šä¼  ä¸‹è½½è¿›åº¦
+    // max_transfer_progress ï¼š è¿›åº¦çš„æœ€å¤§å€¼ï¼Œ transfer_progress/max_transfer_progress è®¡ç®—ä¼ è¾“ç™¾åˆ†æ¯”
     void (*on_transfer_progress)(unsigned long long transfer_cookie, unsigned long long transfer_progress, unsigned long long max_transfer_progress);
 
-    // ´«Êä½á¹û
-    // Ô­À´µÄÊÕµ½Íê³ÉÍ¨ÖªºóÔÙÈ¥ tx_query_transfer_info µ÷Õû³ÉÍê³ÉÍ¨ÖªÖ±½Ó´ø»Øtx_file_transfer_info
-    // tx_file_transfer_info½á¹¹ÌåÀï°üº¬ÎÄ¼ş±¾µØÂ·¾¶£¬ÏÂÔØ¾ÍÊÇÎÄ¼şµÄ±£´æÂ·¾¶
+    // ä¼ è¾“ç»“æœ
+    // åŸæ¥çš„æ”¶åˆ°å®Œæˆé€šçŸ¥åå†å» tx_query_transfer_info è°ƒæ•´æˆå®Œæˆé€šçŸ¥ç›´æ¥å¸¦å›tx_file_transfer_info
+    // tx_file_transfer_infoç»“æ„ä½“é‡ŒåŒ…å«æ–‡ä»¶æœ¬åœ°è·¯å¾„ï¼Œä¸‹è½½å°±æ˜¯æ–‡ä»¶çš„ä¿å­˜è·¯å¾„
     void (*on_transfer_complete)(unsigned long long transfer_cookie, int err_code, tx_file_transfer_info* tran_info);
 
-    // ÊÕµ½C2C transferÍ¨Öª
+    // æ”¶åˆ°C2C transferé€šçŸ¥
     void (*on_file_in_come)(unsigned long long transfer_cookie, const tx_ccmsg_inst_info * inst_info, const tx_file_transfer_info * tran_info);
 
 }tx_file_transfer_notify;
 
 
 /**
-* ³õÊ¼»¯´«ÎÄ¼ş
-*   notify : »Øµ÷
-*   path_recv_file : ½ÓÊÕÎÄ¼şµÄÄ¿Â¼
+* åˆå§‹åŒ–ä¼ æ–‡ä»¶
+*   notify : å›è°ƒ
+*   path_recv_file : æ¥æ”¶æ–‡ä»¶çš„ç›®å½•
 */
 SDK_API int tx_init_file_transfer(tx_file_transfer_notify notify, char * path_recv_file);
 
 
 /**
-* ÉÏ´«ÎÄ¼ş
-* channeltype : ´«ÊäÍ¨µÀÀàĞÍ£¬È¡Öµ·¶Î§¼ûtx_file_transfer_channeltype¡£Éè±¸ÊÖQÖ®¼äµÄĞ¡ÎÄ¼şÍ¨µÀ»¹Î´ÍêÈ«·Å¿ª£¬Éè±¸ÉÏ´«ÇëÊ¹ÓÃtransfer_channeltype_FTN(1)¡£
-* filetype : ´«ÊäÎÄ¼şÀàĞÍ£¬È¡Öµ·¶Î§¼ûtx_file_transfer_filetype
+* ä¸Šä¼ æ–‡ä»¶
+* channeltype : ä¼ è¾“é€šé“ç±»å‹ï¼Œå–å€¼èŒƒå›´è§tx_file_transfer_channeltypeã€‚è®¾å¤‡æ‰‹Qä¹‹é—´çš„å°æ–‡ä»¶é€šé“è¿˜æœªå®Œå…¨æ”¾å¼€ï¼Œè®¾å¤‡ä¸Šä¼ è¯·ä½¿ç”¨transfer_channeltype_FTN(1)ã€‚
+* filetype : ä¼ è¾“æ–‡ä»¶ç±»å‹ï¼Œå–å€¼èŒƒå›´è§tx_file_transfer_filetype
+* file_path: ä¸Šä¼ çš„æ–‡ä»¶è·¯å¾„
+* transfer_cookieï¼šè¿”å›ä»»åŠ¡cookie
 */
 SDK_API int tx_upload_file(int channeltype, int filetype, char * file_path, unsigned long long * transfer_cookie);
 
 
 /**
-* ÏÂÔØÎÄ¼ş
-* channeltype : ´«ÊäÍ¨µÀÀàĞÍ£¬È¡Öµ·¶Î§¼ûtx_file_transfer_channeltype¡£Éè±¸ÊÖQÖ®¼äµÄĞ¡ÎÄ¼şÍ¨µÀ»¹Î´ÍêÈ«·Å¿ª£¬Éè±¸ÉÏ´«ÇëÊ¹ÓÃtransfer_channeltype_FTN(1)¡£
-* filetype : ´«ÊäÎÄ¼şÀàĞÍ£¬È¡Öµ·¶Î§¼ûtx_file_transfer_filetype
+* ä¸‹è½½æ–‡ä»¶
+* channeltype : ä¼ è¾“é€šé“ç±»å‹ï¼Œå–å€¼èŒƒå›´è§tx_file_transfer_channeltypeã€‚è®¾å¤‡æ‰‹Qä¹‹é—´çš„å°æ–‡ä»¶é€šé“è¿˜æœªå®Œå…¨æ”¾å¼€ï¼Œè®¾å¤‡ä¸Šä¼ è¯·ä½¿ç”¨transfer_channeltype_FTN(1)ã€‚
+* filetype : ä¼ è¾“æ–‡ä»¶ç±»å‹ï¼Œå–å€¼èŒƒå›´è§tx_file_transfer_filetype
+* file_keyï¼šè¦ä¸‹è½½çš„æ–‡ä»¶çš„key
+* key_lengthï¼šfile_keyçš„é•¿åº¦
+* transfer_cookieï¼šè¿”å›ä»»åŠ¡cookie
 */
 SDK_API int tx_download_file(int channeltype, int filetype, char * file_key, int key_length, unsigned long long * transfer_cookie);
 
 
 /**
-* ·¢ËÍÎÄ¼şµ½ÆäËû¶Ë
-* buff_with_file & bussiness_name : ·¢ËÍµ½¶Ô¶ËÊ±£¬¶Ô¶Ë¿É¸ù¾İbussiness_name£¬¶Ô½ÓÊÕµ½µÄÎÄ¼ş×ö²»Í¬µÄ´¦Àí£¬buff_with_file¿ÉÒÔĞ¯´øÆäËû²ÎÊıºÍĞÅÏ¢
+* å‘é€æ–‡ä»¶åˆ°å…¶ä»–ç«¯
+* target_idï¼šæ¥æ”¶æ–‡ä»¶çš„tinyid
+* file_pathï¼šå‘é€çš„æ–‡ä»¶è·¯å¾„
+* transfer_cookieï¼šè¿”å›ä»»åŠ¡cookie
+* buff_with_file & bussiness_name : å‘é€åˆ°å¯¹ç«¯æ—¶ï¼Œå¯¹ç«¯å¯æ ¹æ®bussiness_nameï¼Œå¯¹æ¥æ”¶åˆ°çš„æ–‡ä»¶åšä¸åŒçš„å¤„ç†ï¼Œbuff_with_fileå¯ä»¥æºå¸¦å…¶ä»–å‚æ•°å’Œä¿¡æ¯
 */
 SDK_API int tx_send_file_to(unsigned long long target_id, char * file_path, unsigned long long * transfer_cookie, char * buff_with_file, int buff_length, char * bussiness_name);
 // SDK_API int tx_send_file_to_ex(const tx_ccmsg_inst_info * inst_info, char * file_path, unsigned long long * transfer_cookie, char * buff_with_file, int buff_length, char * bussiness_name);
 
 
 /**
-* È¡Ïû´«Êä
+* å–æ¶ˆä¼ é€æ–‡ä»¶çš„ä»»åŠ¡
+* transfer_cookieï¼šè¦å–æ¶ˆçš„ä»»åŠ¡cookieï¼Œç”±tx_send_file_to, tx_upload_file, tx_download_file æ‰€è¿”å›
 */
 SDK_API int tx_cancel_transfer(unsigned long long transfer_cookie);
 
 /**
- * ×¢²ábussiness_name¹ıÂË»Øµ÷
+ * æ³¨å†Œbussiness_nameè¿‡æ»¤å›è°ƒ
+ * bussiness_nameï¼šéœ€è¦å¤„ç†çš„ä¸šåŠ¡ç±»å‹
+ * notifyï¼šä¼ æ–‡ä»¶äº‹ä»¶å›è°ƒé€šçŸ¥
  */
 SDK_API int tx_reg_file_transfer_filter(char * bussiness_name, tx_file_transfer_notify notify);
 
 /**
-* »ñÈ¡Ğ¡ÎÄ¼şÍ¨µÀÏÂÔØurl
-* fileId£ºÍ¨¹ıĞ¡ÎÄ¼şÍ¨µÀÉÏ´«Ô´ÎÄ¼şµÃµ½µÄÎÄ¼şË÷Òı¡£¶Ô¶Ë·¢ËÍ¹ıÀ´¡£
-* fileType£ºÎÄ¼şÀàĞÍ£¬Ò²ÊÇ¶Ô¶Ë·¢ËÍ¹ıÀ´µÄ¡£
-* downloadUrl£º³ö²Î¡£Ê¹ÓÃÕß·ÖÅä¿Õ¼ä£¬×Ö½Ú´óĞ¡ÉèÖÃÎª400£¬ÓÃÓÚ±£´æ±ê×¼httpÏÂÔØÎÄ¼şµÄÁ´½ÓµØÖ·¡££¨¼ÜÆ½5ÔÂ28ºÅ²ÅÖ§³ÖĞ¡ÎÄ¼şÍ¨µÀ±ê×¼httpÏÂÔØ£©
+* è·å–å°æ–‡ä»¶é€šé“ä¸‹è½½url
+* fileIdï¼šé€šè¿‡å°æ–‡ä»¶é€šé“ä¸Šä¼ æºæ–‡ä»¶å¾—åˆ°çš„æ–‡ä»¶ç´¢å¼•ã€‚å¯¹ç«¯å‘é€è¿‡æ¥ã€‚
+* fileTypeï¼šæ–‡ä»¶ç±»å‹ï¼Œä¹Ÿæ˜¯å¯¹ç«¯å‘é€è¿‡æ¥çš„ã€‚
+* downloadUrlï¼šå‡ºå‚ã€‚ä½¿ç”¨è€…åˆ†é…ç©ºé—´ï¼Œå­—èŠ‚å¤§å°è®¾ç½®ä¸º400ï¼Œç”¨äºä¿å­˜æ ‡å‡†httpä¸‹è½½æ–‡ä»¶çš„é“¾æ¥åœ°å€ã€‚ï¼ˆæ¶å¹³5æœˆ28å·æ‰æ”¯æŒå°æ–‡ä»¶é€šé“æ ‡å‡†httpä¸‹è½½ï¼‰
 */
 SDK_API int tx_get_minidownload_url(char* fileId, int fileType, char* downloadUrl);
 

@@ -10,63 +10,71 @@ CXX_EXTERN_BEGIN
 
 enum tx_test_mode_enum
 {
-    test_mode_default           = 0, // ½ÓÈëÕıÊ½»·¾³
-    test_mode_test_env          = 1, // µÇÂ¼µ½²âÊÔ»·¾³
+    test_mode_default           = 0, // æ¥å…¥æ­£å¼ç¯å¢ƒ
+    test_mode_test_env          = 1, // ç™»å½•åˆ°æµ‹è¯•ç¯å¢ƒ
 };
 
 enum tx_network_type
 {
 	network_type_none			= 0,
-	network_type_wifi			= 1, // wifiÍøÂçÒÔ¼°³ıÁËÒÆ¶¯¡¢ÁªÍ¨¡¢µçĞÅ¡¢Ïã¸ÛÖ®ÍâµÄÍøÂç
-	network_type_mobile			= 2, // ÒÆ¶¯ÍøÂç
-	network_type_unicom			= 3, // ÁªÍ¨ÍøÂç
-	network_type_telecom		= 4, // µçĞÅÍøÂç
-	network_type_hongkong		= 5, // Ïã¸Û
+	network_type_wifi			= 1, // wifiç½‘ç»œä»¥åŠé™¤äº†ç§»åŠ¨ã€è”é€šã€ç”µä¿¡ã€é¦™æ¸¯ä¹‹å¤–çš„ç½‘ç»œ
+	network_type_mobile			= 2, // ç§»åŠ¨ç½‘ç»œ
+	network_type_unicom			= 3, // è”é€šç½‘ç»œ
+	network_type_telecom		= 4, // ç”µä¿¡ç½‘ç»œ
+	network_type_hongkong		= 5, // é¦™æ¸¯
 };
 
-//Éè±¸ĞÅÏ¢£ºĞèÒªÔÚ³õÊ¼»¯Éè±¸Ê±Ìá¹©µÄÒ»Ğ©Ó²¼şÏà¹ØĞÅÏ¢£¬±ÈÈç²Ù×÷ÏµÍ³¡¢ipµØÖ·µÈµÈ
+enum tx_sdk_run_mode
+{
+	sdk_run_mode_default		= 0, //æ­£å¸¸æ¨¡å¼
+	sdk_run_mode_low_power		= 1, //ä½åŠŸè€—æ¨¡å¼
+};
+
+//è®¾å¤‡ä¿¡æ¯ï¼šéœ€è¦åœ¨åˆå§‹åŒ–è®¾å¤‡æ—¶æä¾›çš„ä¸€äº›ç¡¬ä»¶ç›¸å…³ä¿¡æ¯ï¼Œæ¯”å¦‚æ“ä½œç³»ç»Ÿã€ipåœ°å€ç­‰ç­‰
 typedef struct _tx_device_info
 {
-    //²Ù×÷ÏµÍ³ĞÅÏ¢
-    char *                      os_platform;                //²Ù×÷ÏµÍ³ÀàĞÍ:iOS,Android,SynbianµÈ    ´ø'\0'½áÎ²µÄ×Ö·û´®
+    //æ“ä½œç³»ç»Ÿä¿¡æ¯
+    char *                      os_platform;                //æ“ä½œç³»ç»Ÿç±»å‹:iOS,Android,Synbianç­‰    å¸¦'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
 
-    //ÍøÂçĞÅÏ¢
-    int                         network_type;				//Éè±¸µ±Ç°Á¬½ÓµÄÍøÂç£¬±ØĞë´ÓÃ¶¾Ù±äÁ¿tx_network_typeÖĞÈ¡Öµ
-                                                            //SDK»á¸ù¾İ²»Í¬µÄÍøÂçÀàĞÍÁ¬½Ó¶ÔÓ¦µÄip·şÎñÆ÷£¬ÓÅ»¯ĞÔÄÜ
+    //ç½‘ç»œä¿¡æ¯
+    int                         network_type;				//è®¾å¤‡å½“å‰è¿æ¥çš„ç½‘ç»œï¼Œå¿…é¡»ä»æšä¸¾å˜é‡tx_network_typeä¸­å–å€¼
+                                                            //SDKä¼šæ ¹æ®ä¸åŒçš„ç½‘ç»œç±»å‹è¿æ¥å¯¹åº”çš„ipæœåŠ¡å™¨ï¼Œä¼˜åŒ–æ€§èƒ½
 
-    //Ó²¼şĞÅÏ¢
-    char *                      device_name;                //Éè±¸Ãû³Æ,³¤¶È²»³¬¹ı32×Ö½Ú    ´ø'\0'½áÎ²µÄ×Ö·û´®
-    char *                      device_serial_number;       //Éè±¸ĞòÁĞºÅ,³¤¶È²»³¬¹ı16×Ö½Ú    ´ø'\0'½áÎ²µÄ×Ö·û´®
-    char *                      device_license;             //Éè±¸LICENSE    ´ø'\0'½áÎ²µÄ×Ö·û´®
-    int                         product_version;            //Éè±¸°æ±¾
+    //ç¡¬ä»¶ä¿¡æ¯
+    char *                      device_name;                //è®¾å¤‡åç§°,é•¿åº¦ä¸è¶…è¿‡32å­—èŠ‚    å¸¦'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *                      device_serial_number;       //è®¾å¤‡åºåˆ—å·,é•¿åº¦ä¸è¶…è¿‡16å­—èŠ‚    å¸¦'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    char *                      device_license;             //è®¾å¤‡LICENSE    å¸¦'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+    int                         product_version;            //è®¾å¤‡ç‰ˆæœ¬
 
-    //¼´Í¨Server·ÖÅäµÄĞÅÏ¢
-    int                         product_id;                 //Ã¿Ò»¸ö³§ÉÌµÄÃ¿Ò»ÖÖÀàĞÍµÄÉè±¸¶ÔÓ¦µÄÒ»¸öid
-    char *                      server_pub_key;             //Éè±¸µÇÂ½/×¢²áÊ¹ÓÃµÄ¼ÓÃÜserver¹«Ô¿    ´ø'\0'½áÎ²µÄ×Ö·û´®
-    unsigned int                test_mode;                  //²âÊÔ»·¾³±êÖ¾Î»
+    //å³é€šServeråˆ†é…çš„ä¿¡æ¯
+    int                         product_id;                 //æ¯ä¸€ä¸ªå‚å•†çš„æ¯ä¸€ç§ç±»å‹çš„è®¾å¤‡å¯¹åº”çš„ä¸€ä¸ªid
+    char *                      server_pub_key;             //è®¾å¤‡ç™»é™†/æ³¨å†Œä½¿ç”¨çš„åŠ å¯†serverå…¬é’¥    å¸¦'\0'ç»“å°¾çš„å­—ç¬¦ä¸²
+
+    unsigned int                test_mode;                  //æµ‹è¯•ç¯å¢ƒæ ‡å¿—ä½
+    int							run_mode;					//SDKè¿è¡Œæ¨¡å¼ï¼Œå¿…é¡»ä»æšä¸¾å˜é‡tx_sdk_run_modeä¸­å–å€¼
 } tx_device_info;
 
-//Éè±¸°ó¶¨ÕßĞÅÏ¢
+//è®¾å¤‡ç»‘å®šè€…ä¿¡æ¯
 typedef struct tag_tx_binder_info
 {
-    int                 type;			//°ó¶¨ÕßÀàĞÍ
-    unsigned long long  tinyid;			//°ó¶¨Õßtinyid
-    unsigned long long  uin;			//°ó¶¨Õßuin
-    char                nick_name[128];	//°ó¶¨ÕßêÇ³Æ
-    int                 gender;			//°ó¶¨ÕßĞÔ±ğ
-    char                head_url[1024];	//°ó¶¨ÕßÍ·Ïñurl
+    int                 type;			//ç»‘å®šè€…ç±»å‹
+    unsigned long long  tinyid;			//ç»‘å®šè€…tinyid
+    unsigned long long  uin;			//ç»‘å®šè€…uin
+    char                nick_name[128];	//ç»‘å®šè€…æ˜µç§°
+    int                 gender;			//ç»‘å®šè€…æ€§åˆ«
+    char                head_url[1024];	//ç»‘å®šè€…å¤´åƒurl
 }tx_binder_info;
 
-//Éè±¸Í¨Öª£ºµÇÂ¼¡¢ÔÚÏß×´Ì¬¡¢ÏûÏ¢µÈÏà¹ØµÄÊÂ¼şÍ¨Öª
+//è®¾å¤‡é€šçŸ¥ï¼šç™»å½•ã€åœ¨çº¿çŠ¶æ€ã€æ¶ˆæ¯ç­‰ç›¸å…³çš„äº‹ä»¶é€šçŸ¥
 typedef struct _tx_device_notify
 {
-	// ³É¹¦ÉÏ´«Éè±¸×¢²áĞÅÏ¢µ½·şÎñÆ÷£¨ÓÃÓÚ¿çÍø°ó¶¨Ä£Ê½ÏÂÊÇ·ñÕ¹Ê¾¶şÎ¬ÂëµÄÒÀ¾İ£¬ÓĞ´Ë»Øµ÷Ôò±íÊ¾ĞÅÏ¢ÉÏ´«³É¹¦£¬¿ÉÒÔÕ¹Ê¾¶şÎ¬Âë£©
+	// æˆåŠŸä¸Šä¼ è®¾å¤‡æ³¨å†Œä¿¡æ¯åˆ°æœåŠ¡å™¨ï¼ˆç”¨äºè·¨ç½‘ç»‘å®šæ¨¡å¼ä¸‹æ˜¯å¦å±•ç¤ºäºŒç»´ç çš„ä¾æ®ï¼Œæœ‰æ­¤å›è°ƒåˆ™è¡¨ç¤ºä¿¡æ¯ä¸Šä¼ æˆåŠŸï¼Œå¯ä»¥å±•ç¤ºäºŒç»´ç ï¼‰
 	void (*on_wlan_upload_register_info_success)();
 
     // Login complete callback
     void (*on_login_complete)(int error_code);
 
-    // Online status changed ---- statusÈ¡ÖµÎª£º11 ÔÚÏß¡¢21 ÀëÏß
+    // Online status changed ---- statuså–å€¼ä¸ºï¼š11 åœ¨çº¿ã€21 ç¦»çº¿
     void (*on_online_status)(int old_status,  int new_status);
 
     // binder list change callback
@@ -74,46 +82,46 @@ typedef struct _tx_device_notify
 } tx_device_notify;
 
 
-//SDK³õÊ¼»¯Ä¿Â¼£ºSDK»áÔÚÕâĞ©Ä¿Â¼ÏÂĞ´ÎÄ¼ş£¬³§ÉÌĞèÒªÍ¬Ê±Ö¸¶¨Ã¿¸öÄ¿Â¼ÏÂ¿ÉĞ´´æ´¢¿Õ¼äµÄ´óĞ¡(µ¥Î»£º×Ö½Ú)£¬SDK»á±£Ö¤²»°ÑÉè±¸Ğ´±¬.
-//ÕâÈı¸öÄ¿Â¼ÖĞµÄsystem_path±ØĞëÌá¹©£»app_path¾¡Á¿Ìá¹©£¬ÒÔ·½±ã×·²éÎÊÌâ£»temp_path½¨ÒéÌá¹©
-//ÕâÈı¸öÄ¿Â¼È¡Öµ¿ÉÒÔÏàÍ¬£¬Èç¹ûÏàÍ¬£¬ĞèÒª×¢ÒâºÏÀí·ÖÅäÃ¿¸öÄ¿Â¼¿ÉĞ´´æ´¢¿Õ¼äµÄ´óĞ¡
+//SDKåˆå§‹åŒ–ç›®å½•ï¼šSDKä¼šåœ¨è¿™äº›ç›®å½•ä¸‹å†™æ–‡ä»¶ï¼Œå‚å•†éœ€è¦åŒæ—¶æŒ‡å®šæ¯ä¸ªç›®å½•ä¸‹å¯å†™å­˜å‚¨ç©ºé—´çš„å¤§å°(å•ä½ï¼šå­—èŠ‚)ï¼ŒSDKä¼šä¿è¯ä¸æŠŠè®¾å¤‡å†™çˆ†.
+//è¿™ä¸‰ä¸ªç›®å½•ä¸­çš„system_pathå¿…é¡»æä¾›ï¼›app_pathå°½é‡æä¾›ï¼Œä»¥æ–¹ä¾¿è¿½æŸ¥é—®é¢˜ï¼›temp_pathå»ºè®®æä¾›
+//è¿™ä¸‰ä¸ªç›®å½•å–å€¼å¯ä»¥ç›¸åŒï¼Œå¦‚æœç›¸åŒï¼Œéœ€è¦æ³¨æ„åˆç†åˆ†é…æ¯ä¸ªç›®å½•å¯å†™å­˜å‚¨ç©ºé—´çš„å¤§å°
 typedef struct _tx_init_path
 {
-    //SDK»áÔÚ¸ÃÄ¿Â¼ÏÂĞ´Èë±£Ö¤Õı³£ÔËĞĞ±ØĞèµÄÅäÖÃĞÅÏ¢£»
-    //SDK¶Ô¸ÃÄ¿Â¼µÄ´æ´¢¿Õ¼äÒªÇó£¨×îĞ¡´óĞ¡£º10K£¬½¨Òé´óĞ¡£º100K£©£¬SDKĞ´Èë´ÎÊı½ÏÉÙ£¬¶ÁÈ¡´ÎÊı½Ï¶à
+    //SDKä¼šåœ¨è¯¥ç›®å½•ä¸‹å†™å…¥ä¿è¯æ­£å¸¸è¿è¡Œå¿…éœ€çš„é…ç½®ä¿¡æ¯ï¼›
+    //SDKå¯¹è¯¥ç›®å½•çš„å­˜å‚¨ç©ºé—´è¦æ±‚ï¼ˆæœ€å°å¤§å°ï¼š10Kï¼Œå»ºè®®å¤§å°ï¼š100Kï¼‰ï¼ŒSDKå†™å…¥æ¬¡æ•°è¾ƒå°‘ï¼Œè¯»å–æ¬¡æ•°è¾ƒå¤š
     char *                  system_path;
     unsigned int            system_path_capicity;
 
-    //SDK»áÔÚ¸ÃÄ¿Â¼ÏÂĞ´ÈëÔËĞĞ¹ı³ÌÖĞµÄÒì³£´íÎóĞÅÏ¢
-    //SDK¶Ô¸ÃÄ¿Â¼µÄ´æ´¢¿Õ¼äÒªÇó½Ï´ó£¨×îĞ¡´óĞ¡£º300K£¬½¨Òé´óĞ¡£º1M£©£¬SDKĞ´Èë´ÎÊı½Ï¶à£¬¶ÁÈ¡´ÎÊı½ÏÉÙ
+    //SDKä¼šåœ¨è¯¥ç›®å½•ä¸‹å†™å…¥è¿è¡Œè¿‡ç¨‹ä¸­çš„å¼‚å¸¸é”™è¯¯ä¿¡æ¯
+    //SDKå¯¹è¯¥ç›®å½•çš„å­˜å‚¨ç©ºé—´è¦æ±‚è¾ƒå¤§ï¼ˆæœ€å°å¤§å°ï¼š300Kï¼Œå»ºè®®å¤§å°ï¼š1Mï¼‰ï¼ŒSDKå†™å…¥æ¬¡æ•°è¾ƒå¤šï¼Œè¯»å–æ¬¡æ•°è¾ƒå°‘
     char *                  app_path;
     unsigned int            app_path_capicity;
 
-    //SDK»áÔÚ¸ÃÄ¿Â¼ÏÂĞ´ÈëÁÙÊ±ÎÄ¼ş
+    //SDKä¼šåœ¨è¯¥ç›®å½•ä¸‹å†™å…¥ä¸´æ—¶æ–‡ä»¶
     char *                  temp_path;
     unsigned int            temp_path_capicity;
 } tx_init_path;
 
 
-//Éè±¸°ó¶¨ÕßÀàĞÍ
+//è®¾å¤‡ç»‘å®šè€…ç±»å‹
 enum tx_binder_type
 {
 	binder_type_unknown         = 0,
-	binder_type_owner           = 1, //Ö÷ÈË
-	binder_type_sharer          = 2, //¹²ÏíÕß
+	binder_type_owner           = 1, //ä¸»äºº
+	binder_type_sharer          = 2, //å…±äº«è€…
 };
 
-//Éè±¸°ó¶¨ÕßĞÔ±ğ
+//è®¾å¤‡ç»‘å®šè€…æ€§åˆ«
 enum tx_binder_gender
 {
 	binder_gender_unknown       = -1,
-	binder_gender_male          = 0, //ÄĞ
-	binder_gender_female        = 1, //Å®
+	binder_gender_male          = 0, //ç”·
+	binder_gender_female        = 1, //å¥³
 };
 
 
 /**
-* ½Ó¿ÚËµÃ÷£º³õÊ¼»¯Éè±¸SDK
+* æ¥å£è¯´æ˜ï¼šåˆå§‹åŒ–è®¾å¤‡SDK
 */
 SDK_API int tx_init_device(tx_device_info *info, tx_device_notify *notify, tx_init_path* init_path);
 
@@ -123,64 +131,67 @@ SDK_API int tx_init_device(tx_device_info *info, tx_device_notify *notify, tx_in
 SDK_API int tx_ack_app(unsigned int ip, unsigned int port);
 
 /**
-* ½Ó¿ÚËµÃ÷£ºÍË³öËùÓĞÉè±¸SDKÏà¹ØÂß¼­
+* æ¥å£è¯´æ˜ï¼šé€€å‡ºæ‰€æœ‰è®¾å¤‡SDKç›¸å…³é€»è¾‘
 */
 SDK_API int tx_exit_device();
 
 
 /**
- * ½Ó¿ÚËµÃ÷:»ñÈ¡SDK°æ±¾ºÅ
- * ²ÎÊıËµÃ÷: main_ver     :  Ö÷°æ±¾ºÅ
- *          sub_ver      :  ×Ó°æ±¾ºÅ
- *          build_no     :  ±àÒë´úºÅ
+ * æ¥å£è¯´æ˜:è·å–SDKç‰ˆæœ¬å·
+ * å‚æ•°è¯´æ˜: main_ver     :  ä¸»ç‰ˆæœ¬å·
+ *          sub_ver      :  å­ç‰ˆæœ¬å·
+ *          build_no     :  ç¼–è¯‘ä»£å·
  *
  */
 SDK_API int tx_get_sdk_version(unsigned int *main_ver, unsigned int *sub_ver, unsigned int *build_no);
 
 
 /**
- * ½Ó¿ÚËµÃ÷:ÓÃÓÚÉèÖÃĞ´logµÄ»Øµ÷
- * »Øµ÷º¯Êı²ÎÊıËµÃ÷£º
- *         level   log¼¶±ğ È¡ÖµÓĞ 0 ÑÏÖØ´íÎó£»1 ´íÎó£»2 ¾¯¸æ£»3 ÌáÊ¾£»4 µ÷ÊÔ
- *         module  Ä£¿é
- *         line    ĞĞºÅ
- *         message logÄÚÈİ
+ * æ¥å£è¯´æ˜:ç”¨äºè®¾ç½®å†™logçš„å›è°ƒ
+ * å›è°ƒå‡½æ•°å‚æ•°è¯´æ˜ï¼š
+ *         level   logçº§åˆ« å–å€¼æœ‰ 0 ä¸¥é‡é”™è¯¯ï¼›1 é”™è¯¯ï¼›2 è­¦å‘Šï¼›3 æç¤ºï¼›4 è°ƒè¯•
+ *         module  æ¨¡å—
+ *         line    è¡Œå·
+ *         message logå†…å®¹
  */
 typedef void (*tx_log_func)(int level, const char* module, int line, const char* message);
 SDK_API void tx_set_log_func(tx_log_func log_func);
 
 
 /**
-* ½Ó¿ÚËµÃ÷£º»ñÈ¡Éè±¸°ó¶¨ÕßÁĞ±í¡£ 
-* WARN: system_pathÄ¿Â¼Èç¹û±»Çå³ı£¬Ôò²»ÄÜÀ­È¡µ½°ó¶¨ÕßÁĞ±í
+* æ¥å£è¯´æ˜ï¼šä¸Šä¼ sdk logï¼Œä½¿ç”¨åœºæ™¯ï¼Œæœ‰ç”¨æˆ·äº¤äº’çš„åœºæ™¯ã€‚
+* å¢åŠ è¯¥æ¥å£ç›®çš„æ˜¯ï¼Œå°†sdkè¿è¡Œçš„errorçº§åˆ«çš„logä¸Šä¼ åˆ°æœåŠ¡å™¨ï¼Œç”¨äºé—®é¢˜çš„åˆ†æå’Œå®šä½ã€‚ç”¨æˆ·è§¦å‘è®¾å¤‡è®¾å¤‡ä¸Šä¼ ã€‚
+* å¦‚æœä¸æ˜¯è¿™æ ·çš„åœºæ™¯ï¼Œå»ºè®®ä¸è¦è°ƒç”¨è¯¥æ¥å£ã€‚
+*
+*/
+SDK_API void tx_upload_sdk_log();
+
+
+/**
+* æ¥å£è¯´æ˜ï¼šè·å–è®¾å¤‡ç»‘å®šè€…åˆ—è¡¨ã€‚ 
+* WARN: system_pathç›®å½•å¦‚æœè¢«æ¸…é™¤ï¼Œåˆ™ä¸èƒ½æ‹‰å–åˆ°ç»‘å®šè€…åˆ—è¡¨
 */
 typedef void (*on_get_binder_list_result)(tx_binder_info * pBinderList, int nCount);
 SDK_API int tx_get_binder_list(tx_binder_info * pBinderList, int* nCount, on_get_binder_list_result callback);
 
 
 /**
-* ½Ó¿ÚËµÃ÷£º»ñÈ¡Éè±¸DIN
+* æ¥å£è¯´æ˜ï¼šè·å–è®¾å¤‡DIN
 */
 SDK_API unsigned long long tx_get_self_din();
 
 
 /**
-* ½Ó¿ÚËµÃ÷£ºÉè±¸ÖØĞÂµÇÂ¼
-*/
-SDK_API int tx_device_relogin();
-
-
-/**
- * ½Ó¿ÚËµÃ÷£º½â°óÉè±¸£¬ËùÓĞµÄ°ó¶¨¹ØÏµ½«½â³ı£¬Éè±¸½«´¦ÓÚÎ´°ó¶¨£¬Î´µÇÂ½×´Ì¬
+ * æ¥å£è¯´æ˜ï¼šè§£ç»‘è®¾å¤‡ï¼Œæ‰€æœ‰çš„ç»‘å®šå…³ç³»å°†è§£é™¤ï¼Œè®¾å¤‡å°†å¤„äºæœªç»‘å®šï¼Œæœªç™»é™†çŠ¶æ€
  */
 typedef void (*on_erase_all_binders)(int error_code);
 SDK_API int tx_erase_all_binders(on_erase_all_binders callback);
 
 
 /**
- * ½Ó¿ÚËµÃ÷: »ñÈ¡ÌÚÑ¶ÔÆ·şÎñÆ÷±ê×¼Ğ£Ê±Ê±¼ä
- * retvalue: ·µ»ØÊÇ32Î»·şÎñÆ÷Ğ£Ê±Ê±¼ä£¬ÄÚ²¿Ê¹ÓÃmonotonicÊ±¼ä×÷ÎªÀÛ¼ÓÆ÷£¬±ÜÃâÊÜºÏ×÷·½Ô­Ğ£Ê±Âß¼­µÄÓ°Ïì
- *           Èç¹ûÃ»ÓĞµÇÂ¼³É¹¦£¬Ôò´Ë½Ó¿ÚÖ»·µ»Ø 0
+ * æ¥å£è¯´æ˜: è·å–è…¾è®¯äº‘æœåŠ¡å™¨æ ‡å‡†æ ¡æ—¶æ—¶é—´
+ * retvalue: è¿”å›æ˜¯32ä½æœåŠ¡å™¨æ ¡æ—¶æ—¶é—´ï¼Œå†…éƒ¨ä½¿ç”¨monotonicæ—¶é—´ä½œä¸ºç´¯åŠ å™¨ï¼Œé¿å…å—åˆä½œæ–¹åŸæ ¡æ—¶é€»è¾‘çš„å½±å“
+ *           å¦‚æœæ²¡æœ‰ç™»å½•æˆåŠŸï¼Œåˆ™æ­¤æ¥å£åªè¿”å› 0
  */
 SDK_API int tx_get_server_time();
 

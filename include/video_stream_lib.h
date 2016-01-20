@@ -126,7 +126,7 @@
 extern "C" {
 #endif
 
-#define VIDEO_LIB_VERSION		"AK39 Encoder Lib V1.2.00"
+#define VIDEO_LIB_VERSION		"AK39 Encoder Lib V1.2.00plus interfaceFuncs"
 
 //typedef enum
 //{
@@ -227,6 +227,11 @@ typedef struct _VIDEO_ENC_H264_PAR
 	T_U32 				gopLen;       
 	T_S32				fixedIntraQp;	//为所有的intra帧设置QP
 	T_S32				bitPerSecond;	//目标bps
+//2015.12.11加入宏块级别码率控制&丢帧策略是否打开接口	
+	T_U32 				pictureSkip;//是否需要丢帧
+    T_U32 				mbRc;//宏块级别的码率控制
+	T_U32 				hrd;
+	
 	EncStreamType 	streamType;		//有startcode和没startcode两种
 	//T_U8*				outStreamBuf;
 	//T_U32				maxVideoSize;
@@ -390,6 +395,8 @@ T_VOID VideoStream_Enc_Encode(T_pVOID hVS1,T_pVOID hVS2, T_VIDEOLIB_ENC_IO_PAR *
  */
 T_BOOL VideoStream_Enc_setRC(T_pVOID hVS,T_VIDEOLIB_ENC_RC *video_enc_rc);
 
+
+T_BOOL VideoStream_Enc_getRC(T_pVOID hVS,T_VIDEOLIB_ENC_RC *video_enc_rc);
 
 #ifdef __cplusplus
 }

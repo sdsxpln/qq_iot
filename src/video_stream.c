@@ -198,10 +198,15 @@ static  void * video_new_encode(unsigned int bps)
 	open_input.encH264Par.transform8x8Mode = 0;
 	
 	open_input.encH264Par.qpMin = 10;        
-	open_input.encH264Par.qpMax = 42;
+	open_input.encH264Par.qpMax = 40;
 	open_input.encH264Par.fixedIntraQp = 0;
     open_input.encH264Par.bitPerSecond = bps;
     open_input.encH264Par.gopLen = FRAME_GAP_NUM; 
+
+	open_input.encH264Par.mbRc = 0;
+	open_input.encH264Par.hrd = 0;    
+	open_input.encH264Par.pictureSkip = 0;
+		
 
 	new_handle->rc.qpHdr = -1;
 	new_handle->rc.qpMin = open_input.encH264Par.qpMin;
